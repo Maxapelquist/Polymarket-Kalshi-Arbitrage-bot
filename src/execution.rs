@@ -168,15 +168,22 @@ impl ExecutionEngine {
 
         let latency_to_exec = self.clock.now_ns() - req.detected_ns;
         info!(
-            "[EXEC] 🎯 {} | {:?} y={}¢ n={}¢ | profit={}¢ | {}x | {}µs",
+            "[EXEC] 🎯 {} | {:?}
+        YES: price={}¢ size={}¢
+        NO:  price={}¢ size={}¢
+        ⇒ max_contracts={}
+        ⇒ profit={}¢ | latency={}µs",
             pair.description,
             req.arb_type,
             req.yes_price,
+            req.yes_size,
             req.no_price,
-            profit_cents,
+            req.no_size,
             max_contracts,
+            profit_cents,
             latency_to_exec / 1000
         );
+        
 
         if self.dry_run {
             info!("[EXEC] 🏃 DRY RUN - would execute {} contracts", max_contracts);
@@ -245,7 +252,24 @@ impl ExecutionEngine {
                     self.circuit_breaker.record_success(&pair.pair_id, matched, matched, actual_profit as f64 / 100.0).await;
                 }
 
+
                 if matched > 0 {
+                    // Added now 
+                    let pct_profit = (actual_profit as f64) / (matched as f64 * 100.0) * 100.0;
+    
+                    tracing::info!(
+                        target: "ARB_WIN",
+                        "event={} arb={:?} yes={} no={} matched={} max={} profit={}¢ profit_pct={:.3}",
+                        pair.description,
+                        req.arb_type,
+                        req.yes_price,
+                        req.no_price,
+                        matched,
+                        max_contracts,
+                        actual_profit,
+                        pct_profit
+                    );
+
                     let (platform1, side1, platform2, side2) = match req.arb_type {
                         ArbType::PolyYesKalshiNo => ("polymarket", "yes", "kalshi", "no"),
                         ArbType::KalshiYesPolyNo => ("kalshi", "yes", "polymarket", "no"),
