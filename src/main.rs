@@ -22,31 +22,21 @@
 //! - **Circuit breaker protection** with configurable risk limits
 //! - **Market discovery system** with intelligent caching and incremental updates
 
-mod cache;
-mod circuit_breaker;
-mod config;
-mod discovery;
-mod execution;
-mod kalshi;
-mod polymarket;
-mod polymarket_clob;
-mod position_tracker;
-mod types;
-
 use anyhow::{Context, Result};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{error, info, warn};
 
-use cache::TeamCache;
-use circuit_breaker::{CircuitBreaker, CircuitBreakerConfig};
-use config::{ARB_THRESHOLD, ENABLED_LEAGUES, WS_RECONNECT_DELAY_SECS};
-use discovery::DiscoveryClient;
-use execution::{ExecutionEngine, create_execution_channel, run_execution_loop};
-use kalshi::{KalshiConfig, KalshiApiClient};
-use polymarket_clob::{PolymarketAsyncClient, PreparedCreds, SharedAsyncClient};
-use position_tracker::{PositionTracker, create_position_channel, position_writer_loop};
-use types::{GlobalState, PriceCents};
+use prediction_market_arbitrage::cache::TeamCache;
+use prediction_market_arbitrage::circuit_breaker::{CircuitBreaker, CircuitBreakerConfig};
+use prediction_market_arbitrage::config::{ARB_THRESHOLD, ENABLED_LEAGUES, WS_RECONNECT_DELAY_SECS};
+use prediction_market_arbitrage::discovery::DiscoveryClient;
+use prediction_market_arbitrage::execution::{ExecutionEngine, create_execution_channel, run_execution_loop};
+use prediction_market_arbitrage::kalshi::{self, KalshiConfig, KalshiApiClient};
+use prediction_market_arbitrage::polymarket;
+use prediction_market_arbitrage::polymarket_clob::{PolymarketAsyncClient, PreparedCreds, SharedAsyncClient};
+use prediction_market_arbitrage::position_tracker::{PositionTracker, create_position_channel, position_writer_loop};
+use prediction_market_arbitrage::types::{GlobalState, PriceCents};
 
 /// Polymarket CLOB API host
 const POLY_CLOB_HOST: &str = "https://clob.polymarket.com";
@@ -125,7 +115,7 @@ async fn main() -> Result<()> {
     let discovery = DiscoveryClient::new(
         KalshiApiClient::new(KalshiConfig::from_env()?),
         team_cache
-    );
+    ).await?;
 
     let result = if force_discovery {
         discovery.discover_all_force(ENABLED_LEAGUES).await
@@ -201,7 +191,7 @@ async fn main() -> Result<()> {
         let arb_type_str = std::env::var("TEST_ARB_TYPE").unwrap_or_else(|_| "poly_yes_kalshi_no".to_string());
 
         tokio::spawn(async move {
-            use types::{FastExecutionRequest, ArbType};
+            use prediction_market_arbitrage::types::{FastExecutionRequest, ArbType};
 
             // Wait for WebSocket connections to establish and populate orderbooks
             info!("[TEST] Injecting synthetic arbitrage opportunity in 10 seconds...");
@@ -290,7 +280,7 @@ async fn main() -> Result<()> {
     let heartbeat_state = state.clone();
     let heartbeat_threshold = threshold_cents;
     let heartbeat_handle = tokio::spawn(async move {
-        use crate::types::kalshi_fee_cents;
+        use prediction_market_arbitrage::types::kalshi_fee_cents;
         let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(60));
         loop {
             interval.tick().await;

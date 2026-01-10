@@ -3,7 +3,7 @@
 //! This module handles the discovery of matching markets between Kalshi and Polymarket,
 //! with support for caching, incremental updates, and parallel processing.
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use futures_util::{stream, StreamExt};
 use governor::{Quota, RateLimiter, state::NotKeyed, clock::DefaultClock, middleware::NoOpMiddleware};
 use serde::{Serialize, Deserialize};
@@ -16,6 +16,7 @@ use tracing::{info, warn};
 use crate::cache::TeamCache;
 use crate::config::{LeagueConfig, get_league_configs, get_league_config};
 use crate::kalshi::KalshiApiClient;
+use crate::matcher::{MatchRegistry, MatchEngine};
 use crate::polymarket::GammaClient;
 use crate::types::{MarketPair, MarketType, DiscoveryResult, KalshiMarket, KalshiEvent};
 
@@ -98,24 +99,38 @@ pub struct DiscoveryClient {
     gamma: Arc<GammaClient>,
     pub team_cache: Arc<TeamCache>,
     kalshi_limiter: Arc<KalshiRateLimiter>,
+    match_registry: Arc<MatchRegistry>,
+    match_engine: Arc<MatchEngine>,
     kalshi_semaphore: Arc<Semaphore>,  // Global concurrency limit for Kalshi
     gamma_semaphore: Arc<Semaphore>,
 }
 
 impl DiscoveryClient {
-    pub fn new(kalshi: KalshiApiClient, team_cache: TeamCache) -> Self {
+    pub async fn new(kalshi: KalshiApiClient, team_cache: TeamCache) -> Result<Self> {
         // Create token bucket rate limiter for Kalshi
         let quota = Quota::per_second(NonZeroU32::new(KALSHI_RATE_LIMIT_PER_SEC).unwrap());
         let kalshi_limiter = Arc::new(RateLimiter::direct(quota));
 
-        Self {
+        // Initialize semantic matcher registry and engine
+        let registry = MatchRegistry::load_or_new("match_registry.json")
+            .await
+            .context("Failed to load match registry")?;
+        let match_registry = Arc::new(registry);
+        let match_engine = Arc::new(MatchEngine::new());
+
+        info!("🧠 Semantic matcher initialized with {} existing matches", 
+              match_registry.len().await);
+
+        Ok(Self {
             kalshi: Arc::new(kalshi),
             gamma: Arc::new(GammaClient::new()),
             team_cache: Arc::new(team_cache),
             kalshi_limiter,
+            match_registry,
+            match_engine,
             kalshi_semaphore: Arc::new(Semaphore::new(KALSHI_GLOBAL_CONCURRENCY)),
             gamma_semaphore: Arc::new(Semaphore::new(GAMMA_CONCURRENCY)),
-        }
+        })
     }
 
     /// Load cache from disk (async)
@@ -428,8 +443,13 @@ impl DiscoveryClient {
             .map(|task| {
                 let gamma = self.gamma.clone();
                 let semaphore = self.gamma_semaphore.clone();
+                let match_registry = self.match_registry.clone();
+                let match_engine = self.match_engine.clone();
+                
                 async move {
                     let _permit = semaphore.acquire().await.ok()?;
+                    
+                    // Step 1: Try rule-based matching (existing logic)
                     match gamma.lookup_market(&task.poly_slug).await {
                         Ok(Some((yes_token, no_token))) => {
                             let team_suffix = extract_team_suffix(&task.market.ticker);
@@ -447,7 +467,15 @@ impl DiscoveryClient {
                                 team_suffix: team_suffix.map(|s| s.into()),
                             })
                         }
-                        Ok(None) => None,
+                        Ok(None) => {
+                            // Step 2: Rule-based matching failed, try semantic matching
+                            try_semantic_match(
+                                &task,
+                                &gamma,
+                                &match_registry,
+                                &match_engine,
+                            ).await
+                        }
                         Err(e) => {
                             warn!("  ⚠️ Gamma lookup failed for {}: {}", task.poly_slug, e);
                             None
@@ -524,6 +552,140 @@ impl DiscoveryClient {
 }
 
 // === Helpers ===
+
+/// Try semantic matching when rule-based matching fails
+async fn try_semantic_match(
+    task: &GammaLookupTask,
+    gamma: &Arc<GammaClient>,
+    match_registry: &Arc<MatchRegistry>,
+    match_engine: &Arc<MatchEngine>,
+) -> Option<MarketPair> {
+    // Step 1: Check if already semantically matched (O(1) lookup)
+    let kalshi_id = &task.market.ticker;
+    if match_registry.is_kalshi_matched(kalshi_id).await {
+        if let Some(matched_pair) = match_registry.get_by_kalshi(kalshi_id).await {
+            // Found existing semantic match - use it
+            let poly_slug = matched_pair.poly_event_id.to_string();
+            
+            // Lookup actual tokens from Polymarket
+            match gamma.lookup_market(&poly_slug).await {
+                Ok(Some((yes_token, no_token))) => {
+                    info!("  ✅ SEMANTIC MATCH (cached): {} -> {} (score: {:.3}, quality: {:?})",
+                          kalshi_id, poly_slug, matched_pair.similarity, matched_pair.quality);
+                    let team_suffix = extract_team_suffix(&task.market.ticker);
+                    return Some(MarketPair {
+                        pair_id: format!("{}-{}", poly_slug, task.market.ticker).into(),
+                        league: task.league.clone().into(),
+                        market_type: task.market_type,
+                        description: format!("{} - {}", task.event.title, task.market.title).into(),
+                        kalshi_event_ticker: task.event.event_ticker.clone().into(),
+                        kalshi_market_ticker: task.market.ticker.clone().into(),
+                        poly_slug: poly_slug.into(),
+                        poly_yes_token: yes_token.into(),
+                        poly_no_token: no_token.into(),
+                        line_value: task.market.floor_strike,
+                        team_suffix: team_suffix.map(|s| s.into()),
+                    });
+                }
+                _ => {
+                    warn!("  ⚠️ Semantic match cached but tokens unavailable: {}", poly_slug);
+                    return None;
+                }
+            }
+        }
+    }
+
+    // Step 2: Not yet matched - try live semantic matching
+    // Fetch active Polymarket events as candidates
+    let poly_events = match gamma.fetch_active_events(100).await {
+        Ok(events) if !events.is_empty() => events,
+        Ok(_) => {
+            warn!("  ⚠️ No Polymarket events available for semantic matching");
+            return None;
+        }
+        Err(e) => {
+            warn!("  ⚠️ Failed to fetch Polymarket events: {}", e);
+            return None;
+        }
+    };
+
+    // Prepare Kalshi event descriptor
+    let kalshi_desc = format!("{} - {}", task.event.title, task.market.title);
+    let kalshi_event = match_engine.prepare_event(
+        Arc::from(task.market.ticker.as_str()),
+        Arc::from(kalshi_desc.as_str()),
+    );
+
+    // Prepare Polymarket candidate descriptors
+    let poly_descriptors: Vec<_> = poly_events.iter()
+        .map(|(question, slug, _, _)| {
+            match_engine.prepare_event(
+                Arc::from(slug.as_str()),
+                Arc::from(question.as_str()),
+            )
+        })
+        .collect();
+
+    // Try to match
+    if poly_descriptors.is_empty() {
+        return None;
+    }
+
+    match match_engine.match_event(&kalshi_event, &poly_descriptors) {
+        Some((best_idx, similarity)) => {
+            let (question, slug, yes_token, no_token) = &poly_events[best_idx];
+            
+            info!("  🎯 SEMANTIC MATCH (live): '{}' -> '{}' (score: {:.3}, quality: {:?})",
+                  kalshi_desc, question, similarity,
+                  crate::matcher::MatchQuality::from_similarity(similarity));
+
+            // Register the match for future O(1) lookups
+            let matched_pair = crate::matcher::MatchedPair {
+                kalshi_event_id: Arc::from(task.market.ticker.as_str()),
+                kalshi_description: Arc::from(kalshi_desc.as_str()),
+                poly_event_id: Arc::from(slug.as_str()),
+                poly_description: Arc::from(question.as_str()),
+                similarity,
+                matched_at: std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs(),
+                quality: crate::matcher::MatchQuality::from_similarity(similarity),
+            };
+
+            // Add to registry (non-blocking)
+            let registry_clone = match_registry.clone();
+            let pair_clone = matched_pair.clone();
+            tokio::spawn(async move {
+                if let Err(e) = registry_clone.add_match(pair_clone).await {
+                    warn!("Failed to add match to registry: {}", e);
+                } else if let Err(e) = registry_clone.save().await {
+                    warn!("Failed to save match registry: {}", e);
+                }
+            });
+
+            // Return MarketPair
+            let team_suffix = extract_team_suffix(&task.market.ticker);
+            Some(MarketPair {
+                pair_id: format!("{}-{}", slug, task.market.ticker).into(),
+                league: task.league.clone().into(),
+                market_type: task.market_type,
+                description: format!("{} - {}", task.event.title, task.market.title).into(),
+                kalshi_event_ticker: task.event.event_ticker.clone().into(),
+                kalshi_market_ticker: task.market.ticker.clone().into(),
+                poly_slug: slug.clone().into(),
+                poly_yes_token: yes_token.clone().into(),
+                poly_no_token: no_token.clone().into(),
+                line_value: task.market.floor_strike,
+                team_suffix: team_suffix.map(|s| s.into()),
+            })
+        }
+        None => {
+            // No match found above threshold
+            None
+        }
+    }
+}
 
 #[derive(Debug, Clone)]
 struct ParsedKalshiTicker {

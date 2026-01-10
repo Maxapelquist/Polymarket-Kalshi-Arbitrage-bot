@@ -6,3 +6,6 @@ claude.md
 .DS_Store
 positions.json
 .discovery_cache.json
+match_registry.json
+embeddings.json
+events_*.json

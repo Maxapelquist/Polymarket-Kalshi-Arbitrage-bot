@@ -73,6 +73,44 @@ impl GammaClient {
         }
     }
     
+    /// Fetch active Polymarket events (for semantic matching)
+    /// Returns list of (question, slug, tokens) tuples
+    pub async fn fetch_active_events(&self, limit: usize) -> Result<Vec<(String, String, String, String)>> {
+        let url = format!("{}/markets?active=true&closed=false&limit={}", GAMMA_API_BASE, limit);
+        
+        let resp = self.http.get(&url).send().await
+            .context("Failed to fetch Polymarket events")?;
+        
+        if !resp.status().is_success() {
+            return Ok(Vec::new());
+        }
+        
+        let markets: Vec<GammaMarketFull> = resp.json().await
+            .context("Failed to parse Polymarket markets")?;
+        
+        let mut results = Vec::new();
+        for market in markets {
+            if let (Some(question), Some(slug), Some(token_ids_str)) = 
+                (market.question, market.slug, market.clob_token_ids) {
+                
+                // Parse token IDs
+                let token_ids: Vec<String> = serde_json::from_str(&token_ids_str)
+                    .unwrap_or_default();
+                
+                if token_ids.len() >= 2 {
+                    results.push((
+                        question,
+                        slug,
+                        token_ids[0].clone(),
+                        token_ids[1].clone(),
+                    ));
+                }
+            }
+        }
+        
+        Ok(results)
+    }
+    
     /// Look up Polymarket market by slug, return (yes_token, no_token)
     /// Tries both the exact date and next day (timezone handling)
     pub async fn lookup_market(&self, slug: &str) -> Result<Option<(String, String)>> {
@@ -134,6 +172,14 @@ struct GammaMarket {
     clob_token_ids: Option<String>,
     active: Option<bool>,
     closed: Option<bool>,
+}
+
+#[derive(Debug, Deserialize)]
+struct GammaMarketFull {
+    question: Option<String>,
+    slug: Option<String>,
+    #[serde(rename = "clobTokenIds")]
+    clob_token_ids: Option<String>,
 }
 
 /// Increment the date in a Polymarket slug by 1 day
