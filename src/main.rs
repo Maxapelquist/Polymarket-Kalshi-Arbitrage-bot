@@ -70,7 +70,53 @@ async fn main() -> Result<()> {
     let kalshi_config = KalshiConfig::from_env()?;
     info!("[KALSHI] API key loaded");
 
-    // Load Polymarket credentials
+    // Load team code mapping cache
+    let team_cache = TeamCache::load();
+    info!("📂 Loaded {} team code mappings", team_cache.len());
+
+    // Run discovery FIRST (before Polymarket CLOB client which may fail)
+    let force_discovery = std::env::var("FORCE_DISCOVERY")
+        .map(|v| v == "1" || v == "true")
+        .unwrap_or(false);
+
+    info!("🔍 Market discovery{}...",
+          if force_discovery { " (forced refresh)" } else { "" });
+
+    let discovery = DiscoveryClient::new(
+        KalshiApiClient::new(KalshiConfig::from_env()?),
+        team_cache.clone()
+    ).await?;
+
+    let result = if force_discovery {
+        discovery.discover_all_force(ENABLED_LEAGUES).await
+    } else {
+        discovery.discover_all(ENABLED_LEAGUES).await
+    };
+
+    info!("📊 Market discovery complete:");
+    info!("   - Matched market pairs: {}", result.pairs.len());
+
+    if !result.errors.is_empty() {
+        for err in &result.errors {
+            warn!("   ⚠️ {}", err);
+        }
+    }
+
+    if result.pairs.is_empty() {
+        error!("No market pairs found!");
+        return Ok(());
+    }
+
+    // Display discovered market pairs
+    info!("📋 Discovered market pairs:");
+    for pair in &result.pairs {
+        info!("   ✅ {} | {} | Kalshi: {}",
+              pair.description,
+              pair.market_type,
+              pair.kalshi_market_ticker);
+    }
+
+    // Load Polymarket credentials (only needed for execution, not discovery)
     dotenvy::dotenv().ok();
     let poly_private_key = std::env::var("POLY_PRIVATE_KEY")
         .context("POLY_PRIVATE_KEY not set")?;
@@ -97,45 +143,8 @@ async fn main() -> Result<()> {
 
     info!("[POLYMARKET] Client ready for {}", &poly_funder[..10]);
 
-    // Load team code mapping cache
-    let team_cache = TeamCache::load();
-    info!("📂 Loaded {} team code mappings", team_cache.len());
-
     // Create Kalshi API client
     let kalshi_api = Arc::new(KalshiApiClient::new(kalshi_config));
-
-    // Run discovery (with caching support)
-    let force_discovery = std::env::var("FORCE_DISCOVERY")
-        .map(|v| v == "1" || v == "true")
-        .unwrap_or(false);
-
-    info!("🔍 Market discovery{}...",
-          if force_discovery { " (forced refresh)" } else { "" });
-
-    let discovery = DiscoveryClient::new(
-        KalshiApiClient::new(KalshiConfig::from_env()?),
-        team_cache
-    ).await?;
-
-    let result = if force_discovery {
-        discovery.discover_all_force(ENABLED_LEAGUES).await
-    } else {
-        discovery.discover_all(ENABLED_LEAGUES).await
-    };
-
-    info!("📊 Market discovery complete:");
-    info!("   - Matched market pairs: {}", result.pairs.len());
-
-    if !result.errors.is_empty() {
-        for err in &result.errors {
-            warn!("   ⚠️ {}", err);
-        }
-    }
-
-    if result.pairs.is_empty() {
-        error!("No market pairs found!");
-        return Ok(());
-    }
 
     // Display discovered market pairs
     info!("📋 Discovered market pairs:");

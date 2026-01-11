@@ -281,6 +281,41 @@ impl KalshiApiClient {
         Ok(resp.markets)
     }
     
+    /// Get all open binary markets from Kalshi (for universal discovery)
+    /// Returns (event_ticker, event_title, market) tuples
+    /// 
+    /// Note: This fetches markets directly, which is MUCH faster than fetching events first
+    pub async fn get_all_open_markets(&self, limit: u32) -> Result<Vec<(String, String, KalshiMarket)>> {
+        info!("[KALSHI] Fetching all open markets directly (limit: {})...", limit);
+        
+        // Fetch ALL open markets directly - much faster than going via events
+        let path = format!("/markets?status=open&limit={}", limit);
+        let markets_resp: KalshiMarketsResponse = self.get(&path).await
+            .context("Failed to fetch open markets from Kalshi")?;
+        
+        let market_count = markets_resp.markets.len();
+        info!("✅ [KALSHI] Fetched {} open markets across all categories", market_count);
+        
+        // Convert to the expected format (event_ticker, event_title, market)
+        let results: Vec<_> = markets_resp.markets.into_iter()
+            .map(|market| {
+                // Extract event_ticker from market ticker
+                // Market ticker format is typically: EVENT_TICKER-OUTCOME or EVENT_TICKER-DATE-OUTCOME
+                // We'll use the market ticker itself as event_ticker for matching purposes
+                // since the title contains all semantic information we need
+                let event_ticker = market.ticker.clone();
+                
+                // Use market title as event title (it contains the full question)
+                let event_title = market.title.clone();
+                
+                (event_ticker, event_title, market)
+            })
+            .collect();
+        
+        info!("✅ [KALSHI] Ready to match {} markets", results.len());
+        Ok(results)
+    }
+    
     /// Generic authenticated POST request
     async fn post<T: serde::de::DeserializeOwned, B: Serialize>(&self, path: &str, body: &B) -> Result<T> {
         let url = format!("{}{}", KALSHI_API_BASE, path);

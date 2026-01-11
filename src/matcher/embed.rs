@@ -10,7 +10,8 @@ use tracing::{info, warn};
 use super::types::{EmbeddingCache, EmbeddingVector};
 
 /// Cosine similarity threshold for auto-matching
-pub const SIMILARITY_THRESHOLD: f32 = 0.88;
+/// Lowered to 0.50 for TF-IDF fallback (increase to 0.88 when using real embeddings)
+pub const SIMILARITY_THRESHOLD: f32 = 0.50;
 
 /// Default embedding dimension (MiniLM-L6-v2 = 384)
 pub const DEFAULT_EMBEDDING_DIM: usize = 384;

@@ -28,8 +28,16 @@ pub const KALSHI_API_DELAY_MS: u64 = 60;
 /// WebSocket reconnect delay (seconds)
 pub const WS_RECONNECT_DELAY_SECS: u64 = 5;
 
-/// Which leagues to monitor (empty slice = all)
-pub const ENABLED_LEAGUES: &[&str] = &[];
+/// Which leagues to monitor for SPORT-SPECIFIC discovery
+/// 
+/// IMPORTANT: If this is EMPTY (default), the bot will use UNIVERSAL DISCOVERY
+/// which fetches ALL markets from both Kalshi and Polymarket (sports, politics, 
+/// crypto, weather, etc.) and uses AI semantic matching to find arbitrage 
+/// opportunities across all categories.
+///
+/// If you want ONLY specific sport leagues, add them here like:
+/// &["nba", "nfl", "epl"]
+pub const ENABLED_LEAGUES: &[&str] = &["EPL", "LALIGA", "NBA", "NFL", "SERIEA", "UCL"];
 
 /// Price logging enabled (set PRICE_LOGGING=1 to enable)
 #[allow(dead_code)]

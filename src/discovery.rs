@@ -217,13 +217,15 @@ impl DiscoveryClient {
 
     /// Full discovery without cache
     async fn discover_full(&self, leagues: &[&str]) -> DiscoveryResult {
-        let configs: Vec<_> = if leagues.is_empty() {
-            get_league_configs()
-        } else {
-            leagues.iter()
-                .filter_map(|l| get_league_config(l))
-                .collect()
-        };
+        // NEW: If leagues is empty, use universal discovery (all markets)
+        if leagues.is_empty() {
+            return self.discover_all_universal().await;
+        }
+        
+        // OLD: Sport-specific discovery (kept for backwards compatibility)
+        let configs: Vec<_> = leagues.iter()
+            .filter_map(|l| get_league_config(l))
+            .collect();
 
         // Parallel discovery across all leagues
         let league_futures: Vec<_> = configs.iter()
@@ -241,6 +243,191 @@ impl DiscoveryClient {
         }
         result.kalshi_events_found = result.pairs.len();
 
+        result
+    }
+    
+    /// Universal discovery: fetch ALL markets from both platforms and use semantic matching
+    /// This is NOT limited to sports - works for politics, crypto, weather, etc.
+    async fn discover_all_universal(&self) -> DiscoveryResult {
+        info!("🌐 Starting UNIVERSAL market discovery (all categories)...");
+        info!("   Fetching markets from both platforms...");
+        
+        let mut result = DiscoveryResult::default();
+        
+        // Step 1: Fetch ALL open markets from Kalshi (up to 2000 for diversity)
+        let kalshi_markets = match self.kalshi.get_all_open_markets(2000).await {
+            Ok(markets) => {
+                info!("✅ Kalshi: {} total markets fetched (all categories)", markets.len());
+                markets
+            }
+            Err(e) => {
+                result.errors.push(format!("Failed to fetch Kalshi markets: {}", e));
+                return result;
+            }
+        };
+        
+        // Step 2: Fetch ALL active markets from Polymarket (up to 1000)
+        let poly_markets = match self.gamma.fetch_active_events(1000).await {
+            Ok(markets) => {
+                info!("✅ Polymarket: {} total markets fetched (all categories)", markets.len());
+                markets
+            }
+            Err(e) => {
+                result.errors.push(format!("Failed to fetch Polymarket markets: {}", e));
+                return result;
+            }
+        };
+        
+        if poly_markets.is_empty() {
+            warn!("⚠️ No Polymarket markets available");
+            return result;
+        }
+        
+        // Step 3: Prepare Polymarket descriptors for matching
+        let poly_descriptors: Vec<_> = poly_markets.iter()
+            .map(|(question, slug, _, _)| {
+                self.match_engine.prepare_event(
+                    Arc::from(slug.as_str()),
+                    Arc::from(question.as_str()),
+                )
+            })
+            .collect();
+        
+        let kalshi_count = kalshi_markets.len();
+        
+        info!("🧠 Starting semantic matching ({} Kalshi × {} Polymarket)...", 
+              kalshi_count, poly_markets.len());
+        info!("   This will process {} market combinations", kalshi_count * poly_markets.len());
+        
+        // Kalshi markets are multi-prop parlays - extract first proposition only
+        // Example: "yes Buffalo,yes Josh Allen: 175+" → "yes Buffalo"
+        let kalshi_markets: Vec<_> = kalshi_markets.into_iter()
+            .map(|(ticker, title, market)| {
+                // Extract first proposition (before first comma)
+                let simple_title = title.split(',').next().unwrap_or(&title).trim().to_string();
+                (ticker, simple_title, market)
+            })
+            .collect();
+        
+        let filtered_count = kalshi_markets.len();
+        info!("📊 Extracted first proposition from {} Kalshi parlay markets", filtered_count);
+        
+        // DEBUG: Log first 3 Kalshi and Polymarket titles to verify data
+        info!("📝 Sample Kalshi markets:");
+        for (i, (ticker, title, _)) in kalshi_markets.iter().enumerate().take(3) {
+            info!("   K{}: {} | {}", i+1, ticker, title);
+        }
+        info!("📝 Sample Polymarket markets:");
+        for (i, (question, slug, _, _)) in poly_markets.iter().enumerate().take(3) {
+            info!("   P{}: {} | {}", i+1, slug, question);
+        }
+        
+        let mut matched_count = 0;
+        let mut skipped_count = 0;
+        let mut processed = 0;
+        
+        // Step 4: For each Kalshi market, try to find a semantic match
+        for (event_ticker, event_title, market) in kalshi_markets {
+            processed += 1;
+            
+            // Progress indicator every 20 markets
+            if processed % 20 == 0 {
+                info!("   🔄 Progress: {}/{} Kalshi markets processed ({} matches, {} skipped)", 
+                      processed, filtered_count, matched_count, skipped_count);
+            }
+            // Check if already matched (O(1) lookup in registry)
+            if self.match_registry.is_kalshi_matched(&market.ticker).await {
+                if let Some(matched_pair) = self.match_registry.get_by_kalshi(&market.ticker).await {
+                    let poly_slug = matched_pair.poly_event_id.to_string();
+                    
+                    // Lookup tokens from Polymarket
+                    if let Ok(Some((yes_token, no_token))) = self.gamma.lookup_market(&poly_slug).await {
+                        result.pairs.push(MarketPair {
+                            pair_id: format!("{}-{}", poly_slug, market.ticker).into(),
+                            league: "universal".into(),  // No specific league
+                            market_type: MarketType::Moneyline,  // Default to moneyline for binary markets
+                            description: format!("{} - {}", event_title, market.title).into(),
+                            kalshi_event_ticker: event_ticker.into(),
+                            kalshi_market_ticker: market.ticker.into(),
+                            poly_slug: poly_slug.into(),
+                            poly_yes_token: yes_token.into(),
+                            poly_no_token: no_token.into(),
+                            line_value: market.floor_strike,
+                            team_suffix: None,
+                        });
+                        matched_count += 1;
+                    }
+                }
+                continue;
+            }
+            
+            // Prepare Kalshi event descriptor
+            let kalshi_desc = format!("{} - {}", event_title, market.title);
+            let kalshi_event = self.match_engine.prepare_event(
+                Arc::from(market.ticker.as_str()),
+                Arc::from(kalshi_desc.as_str()),
+            );
+            
+            // Try to find best semantic match
+            if let Some((best_idx, similarity)) = self.match_engine.match_event(&kalshi_event, &poly_descriptors) {
+                let (question, slug, yes_token, no_token) = &poly_markets[best_idx];
+                let quality = crate::matcher::MatchQuality::from_similarity(similarity);
+                
+                info!("  🎯 MATCH: '{}' ↔ '{}' (score: {:.3}, quality: {:?})",
+                      kalshi_desc, question, similarity, quality);
+                
+                // Register the match
+                let matched_pair = crate::matcher::MatchedPair {
+                    kalshi_event_id: Arc::from(market.ticker.as_str()),
+                    kalshi_description: Arc::from(kalshi_desc.as_str()),
+                    poly_event_id: Arc::from(slug.as_str()),
+                    poly_description: Arc::from(question.as_str()),
+                    similarity,
+                    matched_at: std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .unwrap()
+                        .as_secs(),
+                    quality,
+                };
+                
+                // Save to registry (async)
+                if let Err(e) = self.match_registry.add_match(matched_pair).await {
+                    warn!("Failed to add match to registry: {}", e);
+                }
+                
+                // Create market pair
+                result.pairs.push(MarketPair {
+                    pair_id: format!("{}-{}", slug, market.ticker).into(),
+                    league: "universal".into(),
+                    market_type: MarketType::Moneyline,
+                    description: format!("{} - {}", event_title, market.title).into(),
+                    kalshi_event_ticker: event_ticker.into(),
+                    kalshi_market_ticker: market.ticker.into(),
+                    poly_slug: slug.clone().into(),
+                    poly_yes_token: yes_token.clone().into(),
+                    poly_no_token: no_token.clone().into(),
+                    line_value: market.floor_strike,
+                    team_suffix: None,
+                });
+                
+                matched_count += 1;
+            } else {
+                skipped_count += 1;
+            }
+        }
+        
+        // Save registry to disk
+        if let Err(e) = self.match_registry.save().await {
+            warn!("Failed to save match registry: {}", e);
+        }
+        
+        info!("✅ Universal discovery complete: {} matches, {} skipped",
+              matched_count, skipped_count);
+        
+        result.kalshi_events_found = kalshi_count;
+        result.poly_matches = matched_count;
+        result.poly_misses = skipped_count;
+        
         result
     }
 
