@@ -37,7 +37,7 @@ pub const WS_RECONNECT_DELAY_SECS: u64 = 5;
 ///
 /// If you want ONLY specific sport leagues, add them here like:
 /// &["nba", "nfl", "epl"]
-pub const ENABLED_LEAGUES: &[&str] = &["EPL", "LALIGA", "NBA", "NFL", "SERIEA", "UCL"];
+pub const ENABLED_LEAGUES: &[&str] = &["epl", "laliga", "nba", "nfl", "seriea", "ucl"];
 
 /// Price logging enabled (set PRICE_LOGGING=1 to enable)
 #[allow(dead_code)]

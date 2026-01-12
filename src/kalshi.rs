@@ -24,7 +24,7 @@ use tracing::{debug, error, info};
 use crate::config::{KALSHI_WS_URL, KALSHI_API_BASE, KALSHI_API_DELAY_MS};
 use crate::execution::NanoClock;
 use crate::types::{
-    KalshiEventsResponse, KalshiMarketsResponse, KalshiEvent, KalshiMarket,
+    KalshiEventsResponse, KalshiMarketsResponse, KalshiEvent, KalshiEventFull, KalshiMarket,
     GlobalState, FastExecutionRequest, ArbType, PriceCents, SizeCents, fxhash_str,
 };
 
@@ -273,6 +273,67 @@ impl KalshiApiClient {
         let path = format!("/events?series_ticker={}&limit={}&status=open", series_ticker, limit);
         let resp: KalshiEventsResponse = self.get(&path).await?;
         Ok(resp.events)
+    }
+    
+    /// **UNIVERSAL DISCOVERY**: Fetch ALL open events from Kalshi with cursor pagination
+    /// 
+    /// This is the proper way to discover ALL markets from Kalshi:
+    /// - Fetches events first (with nested markets)
+    /// - Uses cursor pagination to get 1000s of events
+    /// - Returns structured data with series → events → markets hierarchy
+    /// 
+    /// ⚠️ IMPORTANT: This is an expensive operation (rate limits apply)
+    /// - Should run 1x per day for full discovery
+    /// - Incremental updates every 30-60 min for new events only
+    pub async fn discover_all_events_paginated(&self) -> Result<Vec<KalshiEventFull>> {
+        info!("🔍 [KALSHI] Starting full event discovery with cursor pagination...");
+        
+        let mut all_events = Vec::new();
+        let mut cursor: Option<String> = None;
+        let mut page = 0;
+        
+        loop {
+            page += 1;
+            
+            // Build query with cursor if we have one
+            let path = if let Some(ref c) = cursor {
+                format!("/events?status=open&limit=200&with_nested_markets=true&cursor={}", c)
+            } else {
+                "/events?status=open&limit=200&with_nested_markets=true".to_string()
+            };
+            
+            debug!("[KALSHI] Fetching page {} (cursor: {:?})", page, cursor.is_some());
+            
+            let resp: KalshiEventsResponse = self.get(&path).await
+                .context(format!("Failed to fetch events page {}", page))?;
+            
+            let fetched = resp.events.len();
+            all_events.extend(resp.events);
+            
+            info!("[KALSHI] Page {}: fetched {} events (total: {})", page, fetched, all_events.len());
+            
+            // Check if we have more pages
+            if let Some(next_cursor) = resp.cursor {
+                if !next_cursor.is_empty() && fetched > 0 {
+                    cursor = Some(next_cursor);
+                    // Rate limit: sleep between pages
+                    tokio::time::sleep(Duration::from_millis(KALSHI_API_DELAY_MS * 2)).await;
+                } else {
+                    break;
+                }
+            } else {
+                break;
+            }
+            
+            // Safety: prevent infinite loops
+            if page > 100 {
+                error!("[KALSHI] Stopped pagination after 100 pages (safety limit)");
+                break;
+            }
+        }
+        
+        info!("✅ [KALSHI] Full discovery complete: {} events across all categories", all_events.len());
+        Ok(all_events)
     }
     
     pub async fn get_markets(&self, event_ticker: &str) -> Result<Vec<KalshiMarket>> {

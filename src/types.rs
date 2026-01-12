@@ -1199,12 +1199,36 @@ mod tests {
 
 #[derive(Debug, Deserialize)]
 pub struct KalshiEventsResponse {
-    pub events: Vec<KalshiEvent>,
+    pub events: Vec<KalshiEventFull>,
     #[serde(default)]
-    #[allow(dead_code)]
     pub cursor: Option<String>,
 }
 
+/// Full Kalshi event with optional nested markets (when with_nested_markets=true)
+#[derive(Debug, Deserialize, Clone)]
+pub struct KalshiEventFull {
+    pub event_ticker: String,
+    pub series_ticker: String,
+    pub title: String,
+    #[serde(default)]
+    pub sub_title: Option<String>,
+    #[serde(default)]
+    pub mutually_exclusive: Option<bool>,
+    #[serde(default)]
+    pub category: Option<String>,
+    #[serde(default)]
+    pub strike_date: Option<String>,
+    #[serde(default)]
+    pub open_time: Option<String>,
+    #[serde(default)]
+    pub close_time: Option<String>,
+    #[serde(default)]
+    pub status: Option<String>,
+    #[serde(default)]
+    pub markets: Option<Vec<KalshiMarket>>,
+}
+
+/// Legacy simple event (for backwards compatibility)
 #[derive(Debug, Deserialize, Clone)]
 pub struct KalshiEvent {
     pub event_ticker: String,
