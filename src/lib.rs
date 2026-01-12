@@ -1,17 +1,9 @@
-//! Prediction Market Arbitrage Trading System
+//! Market Observer Library
 //!
-//! A high-performance, production-ready arbitrage trading system for cross-platform
-//! prediction markets with real-time price monitoring and execution.
+//! This branch observes market reality.
+//! It does not attempt to understand it.
 
-pub mod cache;
-pub mod circuit_breaker;
 pub mod config;
-pub mod db;
-pub mod discovery;
-pub mod execution;
 pub mod kalshi;
-pub mod matcher;
 pub mod polymarket;
-pub mod polymarket_clob;
-pub mod position_tracker;
 pub mod types;

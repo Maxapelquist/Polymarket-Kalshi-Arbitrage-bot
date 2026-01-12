@@ -1,11 +1,37 @@
+# Build artifacts
 target/
+
+# Environment and secrets
 .env
 .env.keys
+test.txt
 kalshi_private_key.txt
-claude.md
+
+# Database files
+*.db
+*.db-wal
+*.db-shm
+arbitrage.db*
+
+# Logs
+*.log
+wins_night_*.log
+
+# Cache and temporary files
 .DS_Store
-positions.json
+*.json.tmp
 .discovery_cache.json
 match_registry.json
 embeddings.json
 events_*.json
+claude.md
+
+# Data outputs (tracked separately or in data/ folder)
+kalshi_raw_markets.json
+kalshi_markets_structured.jsonl
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

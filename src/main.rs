@@ -1,47 +1,40 @@
-//! Prediction Market Arbitrage Trading System
+//! Market Observer (Kalshi + Polymarket)
 //!
-//! A high-performance, production-ready arbitrage trading system for cross-platform
-//! prediction markets. This system monitors price discrepancies between Kalshi and
-//! Polymarket, executing risk-free arbitrage opportunities in real-time.
+//! ╔═══════════════════════════════════════════════════════════════════════╗
+//! ║                                                                       ║
+//! ║         This branch observes market reality.                         ║
+//! ║         It does not attempt to understand it.                        ║
+//! ║                                                                       ║
+//! ╚═══════════════════════════════════════════════════════════════════════╝
 //!
-//! ## Strategy
+//! ## Purpose
 //!
-//! The core arbitrage strategy exploits the fundamental property of prediction markets:
-//! YES + NO = $1.00 (guaranteed). Arbitrage opportunities exist when:
+//! This program fetches ALL Kalshi markets via the official API and saves them
+//! as raw JSON. No filtering. No interpretation. No matching. No AI.
 //!
-//! ```
-//! Best YES ask (Platform A) + Best NO ask (Platform B) < $1.00
-//! ```
+//! ## Output
 //!
-//! ## Architecture
+//! - `kalshi_raw_markets.json` - Complete dump of all markets with metadata
 //!
-//! - **Real-time price monitoring** via WebSocket connections to both platforms
-//! - **Lock-free orderbook cache** using atomic operations for zero-copy updates
-//! - **SIMD-accelerated arbitrage detection** for sub-millisecond latency
-//! - **Concurrent order execution** with automatic position reconciliation
-//! - **Circuit breaker protection** with configurable risk limits
-//! - **Market discovery system** with intelligent caching and incremental updates
+//! ## Next Steps (NOT in this branch)
+//!
+//! In the next branch, we will:
+//! 1. Feed this raw data to a state-of-the-art LLM
+//! 2. Let the LLM read contract texts and understand rules
+//! 3. Group markets the way a human would
+//! 4. Build probabilistic market matching
 
-use anyhow::{Context, Result};
-use std::sync::Arc;
-use tokio::sync::RwLock;
-use tracing::{error, info, warn};
+use anyhow::Result;
+use tracing::info;
 
-use prediction_market_arbitrage::cache::TeamCache;
-use prediction_market_arbitrage::circuit_breaker::{CircuitBreaker, CircuitBreakerConfig};
-use prediction_market_arbitrage::config::{ARB_THRESHOLD, ENABLED_LEAGUES, WS_RECONNECT_DELAY_SECS};
-use prediction_market_arbitrage::discovery::DiscoveryClient;
-use prediction_market_arbitrage::execution::{ExecutionEngine, create_execution_channel, run_execution_loop};
-use prediction_market_arbitrage::kalshi::{self, KalshiConfig, KalshiApiClient};
-use prediction_market_arbitrage::polymarket;
-use prediction_market_arbitrage::polymarket_clob::{PolymarketAsyncClient, PreparedCreds, SharedAsyncClient};
-use prediction_market_arbitrage::position_tracker::{PositionTracker, create_position_channel, position_writer_loop};
-use prediction_market_arbitrage::types::{GlobalState, PriceCents};
+mod config;
+mod kalshi;
+mod polymarket;
+mod types;
 
-/// Polymarket CLOB API host
-const POLY_CLOB_HOST: &str = "https://clob.polymarket.com";
-/// Polygon chain ID
-const POLYGON_CHAIN_ID: u64 = 137;
+use kalshi::{KalshiApiClient, KalshiConfig};
+use polymarket::PolymarketApiClient;
+use types::{RawMarketObservation, MarketForAI};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -49,315 +42,263 @@ async fn main() -> Result<()> {
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::from_default_env()
-                .add_directive("arb_bot=info".parse().unwrap()),
+                .add_directive("kalshi_observer=info".parse().unwrap()),
         )
         .init();
 
-    info!("🚀 Prediction Market Arbitrage System v2.0");
-    info!("   Profit threshold: <{:.1}¢ ({:.1}% minimum profit)",
-          ARB_THRESHOLD * 100.0, (1.0 - ARB_THRESHOLD) * 100.0);
-    info!("   Monitored leagues: {:?}", ENABLED_LEAGUES);
-
-    // Check for dry run mode
-    let dry_run = std::env::var("DRY_RUN").map(|v| v == "1" || v == "true").unwrap_or(true);
-    if dry_run {
-        info!("   Mode: DRY RUN (set DRY_RUN=0 to execute)");
-    } else {
-        warn!("   Mode: LIVE EXECUTION");
-    }
+    info!("╔═══════════════════════════════════════════════════════════════════════╗");
+    info!("║                                                                       ║");
+    info!("║              🔍 Market Observer (Kalshi + Polymarket)                ║");
+    info!("║                                                                       ║");
+    info!("║         This branch observes market reality.                         ║");
+    info!("║         It does not attempt to understand it.                        ║");
+    info!("║                                                                       ║");
+    info!("╚═══════════════════════════════════════════════════════════════════════╝");
+    info!("");
 
     // Load Kalshi credentials
     let kalshi_config = KalshiConfig::from_env()?;
-    info!("[KALSHI] API key loaded");
+    info!("✅ [AUTH] Kalshi credentials loaded");
 
-    // Load team code mapping cache
-    let team_cache = TeamCache::load();
-    info!("📂 Loaded {} team code mappings", team_cache.len());
+    // Create API client
+    let kalshi_client = KalshiApiClient::new(kalshi_config);
+    info!("✅ [CLIENT] Kalshi API client initialized");
+    info!("");
 
-    // Run discovery FIRST (before Polymarket CLOB client which may fail)
-    let force_discovery = std::env::var("FORCE_DISCOVERY")
-        .map(|v| v == "1" || v == "true")
-        .unwrap_or(false);
+    // Fetch ALL events with nested markets
+    info!("🚀 [DISCOVERY] Starting full Kalshi market discovery...");
+    info!("   This will fetch ALL open events and markets from Kalshi");
+    info!("   No filtering. No interpretation. Just raw observation.");
+    info!("");
 
-    info!("🔍 Market discovery{}...",
-          if force_discovery { " (forced refresh)" } else { "" });
+    let events = kalshi_client.discover_all_events_paginated().await?;
+    
+    info!("📊 [DISCOVERY] Raw statistics:");
+    info!("   Events discovered: {}", events.len());
+    
+    // Count total markets
+    let total_markets: usize = events.iter()
+        .filter_map(|e| e.markets.as_ref())
+        .map(|markets| markets.len())
+        .sum();
+    
+    info!("   Markets discovered: {}", total_markets);
+    info!("");
 
-    let discovery = DiscoveryClient::new(
-        KalshiApiClient::new(KalshiConfig::from_env()?),
-        team_cache.clone()
-    ).await?;
-
-    let result = if force_discovery {
-        discovery.discover_all_force(ENABLED_LEAGUES).await
-    } else {
-        discovery.discover_all(ENABLED_LEAGUES).await
-    };
-
-    info!("📊 Market discovery complete:");
-    info!("   - Matched market pairs: {}", result.pairs.len());
-
-    if !result.errors.is_empty() {
-        for err in &result.errors {
-            warn!("   ⚠️ {}", err);
+    // Convert to observation records
+    info!("🔄 [PROCESSING] Converting to observation records...");
+    let mut observations: Vec<RawMarketObservation> = Vec::new();
+    
+    for event in &events {
+        if let Some(markets) = &event.markets {
+            for market in markets {
+                observations.push(RawMarketObservation::from_event_and_market(event, market));
+            }
         }
     }
+    
+    info!("✅ [PROCESSING] Created {} observation records", observations.len());
+    info!("");
 
-    if result.pairs.is_empty() {
-        error!("No market pairs found!");
-        return Ok(());
-    }
+    // Save RAW data to JSON
+    let raw_output_path = "data/kalshi/raw/kalshi_raw_markets.json";
+    info!("💾 [SAVE-RAW] Writing raw data to {}...", raw_output_path);
+    
+    let json = serde_json::to_string_pretty(&observations)?;
+    std::fs::write(raw_output_path, json)?;
+    
+    info!("✅ [SAVE-RAW] Successfully saved {} markets to {}", observations.len(), raw_output_path);
+    info!("");
 
-    // Display discovered market pairs
-    info!("📋 Discovered market pairs:");
-    for pair in &result.pairs {
-        info!("   ✅ {} | {} | Kalshi: {}",
-              pair.description,
-              pair.market_type,
-              pair.kalshi_market_ticker);
-    }
-
-    // Load Polymarket credentials (only needed for execution, not discovery)
-    dotenvy::dotenv().ok();
-    let poly_private_key = std::env::var("POLY_PRIVATE_KEY")
-        .context("POLY_PRIVATE_KEY not set")?;
-    let poly_funder = std::env::var("POLY_FUNDER")
-        .context("POLY_FUNDER not set (your wallet address)")?;
-
-    // Create async Polymarket client and derive API credentials
-    info!("[POLYMARKET] Creating async client and deriving API credentials...");
-    let poly_async_client = PolymarketAsyncClient::new(
-        POLY_CLOB_HOST,
-        POLYGON_CHAIN_ID,
-        &poly_private_key,
-        &poly_funder,
-    )?;
-    let api_creds = poly_async_client.derive_api_key(0).await?;
-    let prepared_creds = PreparedCreds::from_api_creds(&api_creds)?;
-    let poly_async = Arc::new(SharedAsyncClient::new(poly_async_client, prepared_creds, POLYGON_CHAIN_ID));
-
-    // Load neg_risk cache from Python script output
-    match poly_async.load_cache(".clob_market_cache.json") {
-        Ok(count) => info!("[POLYMARKET] Loaded {} neg_risk entries from cache", count),
-        Err(e) => warn!("[POLYMARKET] Could not load neg_risk cache: {}", e),
-    }
-
-    info!("[POLYMARKET] Client ready for {}", &poly_funder[..10]);
-
-    // Create Kalshi API client
-    let kalshi_api = Arc::new(KalshiApiClient::new(kalshi_config));
-
-    // Display discovered market pairs
-    info!("📋 Discovered market pairs:");
-    for pair in &result.pairs {
-        info!("   ✅ {} | {} | Kalshi: {}",
-              pair.description,
-              pair.market_type,
-              pair.kalshi_market_ticker);
-    }
-
-    // Build global state
-    let state = Arc::new({
-        let mut s = GlobalState::new();
-        for pair in result.pairs {
-            s.add_pair(pair);
+    // Show sample of what we captured
+    info!("📋 [SAMPLE] First 5 markets captured:");
+    for (i, obs) in observations.iter().take(5).enumerate() {
+        info!("   {}. {} | {}", i + 1, obs.market_ticker, obs.title);
+        if let Some(rules) = &obs.rules {
+            info!("      Rules: {}", rules);
         }
-        info!("📡 Global state initialized: tracking {} markets", s.market_count());
-        s
-    });
+    }
+    info!("");
 
-    // Initialize execution infrastructure
-    let (exec_tx, exec_rx) = create_execution_channel();
-    let circuit_breaker = Arc::new(CircuitBreaker::new(CircuitBreakerConfig::from_env()));
+    // === STRUCTURED OBSERVATION (NO AI) ===
+    info!("🔄 [STRUCTURE] Converting to AI-ready format...");
+    info!("   This is mechanical transformation - NO interpretation");
+    info!("");
 
-    let position_tracker = Arc::new(RwLock::new(PositionTracker::new()));
-    let (position_channel, position_rx) = create_position_channel();
+    let mut structured_markets: Vec<MarketForAI> = Vec::new();
+    
+    for raw in &observations {
+        structured_markets.push(MarketForAI::from_raw_kalshi(raw));
+    }
 
-    tokio::spawn(position_writer_loop(position_rx, position_tracker));
+    info!("✅ [STRUCTURE] Created {} structured records", structured_markets.len());
+    info!("");
 
-    let threshold_cents: PriceCents = ((ARB_THRESHOLD * 100.0).round() as u16).max(1);
-    info!("   Execution threshold: {} cents", threshold_cents);
+    // Save STRUCTURED data as JSONL (one line per market for easy streaming)
+    let structured_output_path = "data/kalshi/structured/kalshi_markets_structured.jsonl";
+    info!("💾 [SAVE-STRUCTURED] Writing structured data to {}...", structured_output_path);
+    
+    let mut jsonl_lines = Vec::new();
+    for market in &structured_markets {
+        jsonl_lines.push(serde_json::to_string(&market)?);
+    }
+    std::fs::write(structured_output_path, jsonl_lines.join("\n"))?;
+    
+    info!("✅ [SAVE-STRUCTURED] Successfully saved {} markets to {}", structured_markets.len(), structured_output_path);
+    info!("");
 
-    let engine = Arc::new(ExecutionEngine::new(
-        kalshi_api.clone(),
-        poly_async,
-        state.clone(),
-        circuit_breaker.clone(),
-        position_channel,
-        dry_run,
-    ));
+    // Show sample of structured format
+    info!("📋 [SAMPLE-STRUCTURED] First 3 structured records:");
+    for (i, market) in structured_markets.iter().take(3).enumerate() {
+        info!("   {}. [{}] {}", i + 1, market.market_ticker, market.event_text);
+        info!("      Series: {} | Status: {}", market.series_ticker, market.status);
+        if let Some(rules) = &market.rules_text {
+            info!("      Rules: {}", rules);
+        }
+        info!("      Time: {} → {}", 
+            market.time_window.open.as_deref().unwrap_or("N/A"),
+            market.time_window.close.as_deref().unwrap_or("N/A")
+        );
+    }
+    info!("");
 
-    let exec_handle = tokio::spawn(run_execution_loop(exec_rx, engine));
+    // ═══════════════════════════════════════════════════════════════════════
+    // POLYMARKET OBSERVATION
+    // ═══════════════════════════════════════════════════════════════════════
 
-    // === TEST MODE: Synthetic arbitrage injection ===
-    // TEST_ARB=1 to enable, TEST_ARB_TYPE=poly_yes_kalshi_no|kalshi_yes_poly_no|poly_only|kalshi_only
-    let test_arb = std::env::var("TEST_ARB").map(|v| v == "1" || v == "true").unwrap_or(false);
-    if test_arb {
-        let test_state = state.clone();
-        let test_exec_tx = exec_tx.clone();
-        let test_dry_run = dry_run;
+    info!("════════════════════════════════════════════════════════════════════════");
+    info!("");
+    info!("🔵 [POLYMARKET] Starting observation...");
+    info!("");
 
-        // Parse arb type from environment (default: poly_yes_kalshi_no)
-        let arb_type_str = std::env::var("TEST_ARB_TYPE").unwrap_or_else(|_| "poly_yes_kalshi_no".to_string());
+    // Create Polymarket client (no auth needed for Gamma API)
+    let poly_client = PolymarketApiClient::new();
+    
+    // Fetch ALL markets
+    let poly_markets = poly_client.discover_all_markets().await?;
+    
+    info!("📊 [POLYMARKET] Raw statistics:");
+    info!("   Markets discovered: {}", poly_markets.len());
+    info!("");
 
-        tokio::spawn(async move {
-            use prediction_market_arbitrage::types::{FastExecutionRequest, ArbType};
+    // Save RAW Polymarket data
+    let poly_raw_path = "data/polymarket/raw/polymarket_raw_markets.json";
+    info!("💾 [SAVE-RAW] Writing raw Polymarket data to {}...", poly_raw_path);
+    
+    let poly_json = serde_json::to_string_pretty(&poly_markets)?;
+    std::fs::write(poly_raw_path, poly_json)?;
+    
+    info!("✅ [SAVE-RAW] Successfully saved {} markets to {}", poly_markets.len(), poly_raw_path);
+    info!("");
 
-            // Wait for WebSocket connections to establish and populate orderbooks
-            info!("[TEST] Injecting synthetic arbitrage opportunity in 10 seconds...");
-            tokio::time::sleep(tokio::time::Duration::from_secs(10)).await;
+    // Show sample
+    info!("📋 [SAMPLE] First 5 Polymarket markets:");
+    for (i, market) in poly_markets.iter().take(5).enumerate() {
+        info!("   {}. {} | {}", i + 1, market.id, market.question);
+        if let Some(desc) = &market.description {
+            info!("      Desc: {}", desc);
+        }
+    }
+    info!("");
 
-            // Parse arb type
-            let arb_type = match arb_type_str.to_lowercase().as_str() {
-                "poly_yes_kalshi_no" | "pykn" | "0" => ArbType::PolyYesKalshiNo,
-                "kalshi_yes_poly_no" | "kypn" | "1" => ArbType::KalshiYesPolyNo,
-                "poly_only" | "poly" | "2" => ArbType::PolyOnly,
-                "kalshi_only" | "kalshi" | "3" => ArbType::KalshiOnly,
-                _ => {
-                    warn!("[TEST] Unknown TEST_ARB_TYPE='{}', defaulting to PolyYesKalshiNo", arb_type_str);
-                    warn!("[TEST] Valid values: poly_yes_kalshi_no, kalshi_yes_poly_no, poly_only, kalshi_only");
-                    ArbType::PolyYesKalshiNo
-                }
+    // === STRUCTURED OBSERVATION (Polymarket) ===
+    info!("🔄 [STRUCTURE] Converting Polymarket to AI-ready format...");
+    info!("   This is mechanical transformation - NO interpretation");
+    info!("");
+
+    let mut poly_structured: Vec<MarketForAI> = Vec::new();
+    
+    for raw in &poly_markets {
+        poly_structured.push(MarketForAI::from_raw_polymarket(raw));
+    }
+
+    info!("✅ [STRUCTURE] Created {} structured Polymarket records", poly_structured.len());
+    info!("");
+
+    // Save STRUCTURED Polymarket data as JSONL
+    let poly_structured_path = "data/polymarket/structured/polymarket_markets_structured.jsonl";
+    info!("💾 [SAVE-STRUCTURED] Writing structured Polymarket data to {}...", poly_structured_path);
+    
+    let mut poly_jsonl_lines = Vec::new();
+    for market in &poly_structured {
+        poly_jsonl_lines.push(serde_json::to_string(&market)?);
+    }
+    std::fs::write(poly_structured_path, poly_jsonl_lines.join("\n"))?;
+    
+    info!("✅ [SAVE-STRUCTURED] Successfully saved {} markets to {}", poly_structured.len(), poly_structured_path);
+    info!("");
+
+    // Show sample of structured format
+    info!("📋 [SAMPLE-STRUCTURED] First 3 structured Polymarket records:");
+    for (i, market) in poly_structured.iter().take(3).enumerate() {
+        info!("   {}. [{}] {}", i + 1, market.market_ticker, market.event_text);
+        info!("      Series: {} | Status: {}", market.series_ticker, market.status);
+        if let Some(rules) = &market.rules_text {
+            let rules_preview = if rules.len() > 100 {
+                format!("{}...", &rules[..100])
+            } else {
+                rules.clone()
             };
-
-            // Set prices based on arb type for realistic test scenarios
-            let (yes_price, no_price, description) = match arb_type {
-                ArbType::PolyYesKalshiNo => (40, 50, "P_yes=40¢ + K_no=50¢ + fee≈2¢ = 92¢ → 8¢ profit"),
-                ArbType::KalshiYesPolyNo => (40, 50, "K_yes=40¢ + P_no=50¢ + fee≈2¢ = 92¢ → 8¢ profit"),
-                ArbType::PolyOnly => (48, 50, "P_yes=48¢ + P_no=50¢ + fee=0¢ = 98¢ → 2¢ profit (NO FEES!)"),
-                ArbType::KalshiOnly => (44, 44, "K_yes=44¢ + K_no=44¢ + fee≈4¢ = 92¢ → 8¢ profit (DOUBLE FEES)"),
-            };
-
-            // Find first market with valid state
-            let market_count = test_state.market_count();
-            for market_id in 0..market_count {
-                if let Some(market) = test_state.get_by_id(market_id as u16) {
-                    if let Some(pair) = &market.pair {
-                        // SIZE: 1000 cents = 10 contracts (Poly $1 min requires ~3 contracts at 40¢)
-                        let fake_req = FastExecutionRequest {
-                            market_id: market_id as u16,
-                            yes_price,
-                            no_price,
-                            yes_size: 1000,  // 1000¢ = 10 contracts
-                            no_size: 1000,   // 1000¢ = 10 contracts
-                            arb_type,
-                            detected_ns: 0,
-                        };
-
-                        warn!("[TEST] 🧪 Injecting synthetic {:?} arbitrage for: {}", arb_type, pair.description);
-                        warn!("[TEST]    Scenario: {}", description);
-                        warn!("[TEST]    Position size capped to 10 contracts for safety");
-                        warn!("[TEST]    Execution mode: DRY_RUN={}", test_dry_run);
-
-                        if let Err(e) = test_exec_tx.send(fake_req).await {
-                            error!("[TEST] Failed to send fake arb: {}", e);
-                        }
-                        break;
-                    }
-                }
-            }
-        });
+            info!("      Rules: {}", rules_preview);
+        }
+        info!("      Time: {} → {}", 
+            market.time_window.open.as_deref().unwrap_or("N/A"),
+            market.time_window.close.as_deref().unwrap_or("N/A")
+        );
     }
+    info!("");
 
-    // Initialize Kalshi WebSocket connection (config reused on reconnects)
-    let kalshi_state = state.clone();
-    let kalshi_exec_tx = exec_tx.clone();
-    let kalshi_threshold = threshold_cents;
-    let kalshi_ws_config = KalshiConfig::from_env()?;
-    let kalshi_handle = tokio::spawn(async move {
-        loop {
-            if let Err(e) = kalshi::run_ws(&kalshi_ws_config, kalshi_state.clone(), kalshi_exec_tx.clone(), kalshi_threshold).await {
-                error!("[KALSHI] WebSocket disconnected: {} - reconnecting...", e);
-            }
-            tokio::time::sleep(tokio::time::Duration::from_secs(WS_RECONNECT_DELAY_SECS)).await;
-        }
-    });
+    // ═══════════════════════════════════════════════════════════════════════
+    // GROUPING SCAFFOLD (NO AI, NO LOGIC)
+    // ═══════════════════════════════════════════════════════════════════════
 
-    // Initialize Polymarket WebSocket connection
-    let poly_state = state.clone();
-    let poly_exec_tx = exec_tx.clone();
-    let poly_threshold = threshold_cents;
-    let poly_handle = tokio::spawn(async move {
-        loop {
-            if let Err(e) = polymarket::run_ws(poly_state.clone(), poly_exec_tx.clone(), poly_threshold).await {
-                error!("[POLYMARKET] WebSocket disconnected: {} - reconnecting...", e);
-            }
-            tokio::time::sleep(tokio::time::Duration::from_secs(WS_RECONNECT_DELAY_SECS)).await;
-        }
-    });
+    info!("════════════════════════════════════════════════════════════════════════");
+    info!("");
+    info!("📦 [GROUPING] Creating empty grouping scaffold...");
+    info!("   This branch does NOT perform grouping.");
+    info!("   AI-driven grouping logic comes in next branch.");
+    info!("");
 
-    // System health monitoring and arbitrage diagnostics
-    let heartbeat_state = state.clone();
-    let heartbeat_threshold = threshold_cents;
-    let heartbeat_handle = tokio::spawn(async move {
-        use prediction_market_arbitrage::types::kalshi_fee_cents;
-        let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(60));
-        loop {
-            interval.tick().await;
-            let market_count = heartbeat_state.market_count();
-            let mut with_kalshi = 0;
-            let mut with_poly = 0;
-            let mut with_both = 0;
-            // Track best arbitrage opportunity: (total_cost, market_id, p_yes, k_no, k_yes, p_no, fee, is_poly_yes_kalshi_no)
-            let mut best_arb: Option<(u16, u16, u16, u16, u16, u16, u16, bool)> = None;
+    // Create empty groups array (NO auto-grouping, NO logic)
+    // MarketGroup is an AI output container.
+    // This branch does not populate or modify groups.
+    // Grouping logic is intentionally absent.
+    let groups: Vec<types::MarketGroup> = Vec::new();
 
-            for market in heartbeat_state.markets.iter().take(market_count) {
-                let (k_yes, k_no, _, _) = market.kalshi.load();
-                let (p_yes, p_no, _, _) = market.poly.load();
-                let has_k = k_yes > 0 && k_no > 0;
-                let has_p = p_yes > 0 && p_no > 0;
-                if k_yes > 0 || k_no > 0 { with_kalshi += 1; }
-                if p_yes > 0 || p_no > 0 { with_poly += 1; }
-                if has_k && has_p {
-                    with_both += 1;
+    // Write empty groups to file
+    let groups_path = "data/groups/market_groups.json";
+    let groups_json = serde_json::to_string_pretty(&groups)?;
+    std::fs::write(groups_path, groups_json)?;
 
-                    let fee1 = kalshi_fee_cents(k_no);
-                    let cost1 = p_yes + k_no + fee1;
+    info!("✅ [GROUPING] Empty scaffold created: {}", groups_path);
+    info!("   Groups: {} (intentionally empty)", groups.len());
+    info!("   Ready for future AI-driven grouping logic");
+    info!("");
 
-                    let fee2 = kalshi_fee_cents(k_yes);
-                    let cost2 = k_yes + fee2 + p_no;
-
-                    let (best_cost, best_fee, is_poly_yes) = if cost1 <= cost2 {
-                        (cost1, fee1, true)
-                    } else {
-                        (cost2, fee2, false)
-                    };
-
-                    if best_arb.is_none() || best_cost < best_arb.as_ref().unwrap().0 {
-                        best_arb = Some((best_cost, market.market_id, p_yes, k_no, k_yes, p_no, best_fee, is_poly_yes));
-                    }
-                }
-            }
-
-            info!("💓 System heartbeat | Markets: {} total, {} with Kalshi prices, {} with Polymarket prices, {} with both | threshold={}¢",
-                  market_count, with_kalshi, with_poly, with_both, heartbeat_threshold);
-
-            if let Some((cost, market_id, p_yes, k_no, k_yes, p_no, fee, is_poly_yes)) = best_arb {
-                let gap = cost as i16 - heartbeat_threshold as i16;
-                let desc = heartbeat_state.get_by_id(market_id)
-                    .and_then(|m| m.pair.as_ref())
-                    .map(|p| &*p.description)
-                    .unwrap_or("Unknown");
-                let leg_breakdown = if is_poly_yes {
-                    format!("P_yes({}¢) + K_no({}¢) + K_fee({}¢) = {}¢", p_yes, k_no, fee, cost)
-                } else {
-                    format!("K_yes({}¢) + P_no({}¢) + K_fee({}¢) = {}¢", k_yes, p_no, fee, cost)
-                };
-                if gap <= 10 {
-                    info!("   📊 Best opportunity: {} | {} | gap={:+}¢ | [Poly_yes={}¢ Kalshi_no={}¢ Kalshi_yes={}¢ Poly_no={}¢]",
-                          desc, leg_breakdown, gap, p_yes, k_no, k_yes, p_no);
-                } else {
-                    info!("   📊 Best opportunity: {} | {} | gap={:+}¢ (market efficient)",
-                          desc, leg_breakdown, gap);
-                }
-            } else if with_both == 0 {
-                warn!("   ⚠️  No markets with both Kalshi and Polymarket prices - verify WebSocket connections");
-            }
-        }
-    });
-
-    // Main event loop - run until termination
-    info!("✅ All systems operational - entering main event loop");
-    let _ = tokio::join!(kalshi_handle, poly_handle, heartbeat_handle, exec_handle);
+    info!("╔═══════════════════════════════════════════════════════════════════════╗");
+    info!("║                                                                       ║");
+    info!("║                  ✅ OBSERVATION + STRUCTURING COMPLETE                ║");
+    info!("║                                                                       ║");
+    info!("║   Pipeline executed:                                                 ║");
+    info!("║   1. ✅ Fetched all Kalshi markets (RAW)                            ║");
+    info!("║   2. ✅ Fetched all Polymarket markets (RAW)                        ║");
+    info!("║   3. ✅ Mechanically structured for AI ingestion                    ║");
+    info!("║                                                                       ║");
+    info!("║   Outputs:                                                           ║");
+    info!("║   Kalshi:                                                            ║");
+    info!("║   • data/kalshi/raw/kalshi_raw_markets.json                         ║");
+    info!("║   • data/kalshi/structured/kalshi_markets_structured.jsonl          ║");
+    info!("║                                                                       ║");
+    info!("║   Polymarket:                                                        ║");
+    info!("║   • data/polymarket/raw/polymarket_raw_markets.json                 ║");
+    info!("║   • data/polymarket/structured/polymarket_markets_structured.jsonl  ║");
+    info!("║                                                                       ║");
+    info!("║   Total markets: {} Kalshi + {} Polymarket                      ║", 
+          structured_markets.len(), poly_structured.len());
+    info!("║                                                                       ║");
+    info!("║   Next branch: AI-driven cross-platform market grouping             ║");
+    info!("║                                                                       ║");
+    info!("╚═══════════════════════════════════════════════════════════════════════╝");
 
     Ok(())
 }
