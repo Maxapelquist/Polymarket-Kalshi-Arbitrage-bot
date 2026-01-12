@@ -1,0 +1,12 @@
+warning: unused import: `warn`
+  --> src/kalshi.rs:22:35
+   |
+22 | use tracing::{debug, error, info, warn};
+   |                                   ^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `prediction-market-arbitrage` (lib) generated 1 warning (run `cargo fix --lib -p prediction-market-arbitrage` to apply 1 suggestion)
+    Finished `release` profile [optimized] target(s) in 0.72s
+     Running `target/release/prediction-market-arbitrage`
+[2m2026-01-11T19:33:29.787362Z[0m [31mERROR[0m [2mprediction_market_arbitrage[0m[2m:[0m No market pairs found!
