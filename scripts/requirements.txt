@@ -1,0 +1,10 @@
+# Calibration Script Dependencies
+# 
+# This is for CALIBRATION ONLY - not production
+# No matching, no thresholds, no auto-decisions
+
+openai>=1.0.0
+anthropic>=0.18.0
+numpy>=1.24.0
+scikit-learn>=1.3.0
+python-dotenv>=1.0.0
