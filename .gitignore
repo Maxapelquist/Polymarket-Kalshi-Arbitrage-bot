@@ -38,6 +38,10 @@ __pycache__/
 kalshi_raw_markets.json
 kalshi_markets_structured.jsonl
 
+# Large data files (>50MB)
+data/polymarket/raw/polymarket_markets.json
+data/polymarket/raw/*.json
+
 # IDE
 .vscode/
 .idea/

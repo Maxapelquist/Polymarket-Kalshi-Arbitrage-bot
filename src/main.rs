@@ -15,24 +15,35 @@ use anyhow::Result;
 
 const POLYMARKET_API_BASE: &str = "https://gamma-api.polymarket.com";
 
-// Kalshi-kategorier (source of truth)
-const KALSHI_CATEGORIES: &[&str] = &[
-    "Politics",
-    "Elections",
-    "Economics",
-    "World",
-    "Business",
-    "Science and Technology",
-    "Climate and Weather",
-    "Health",
-    "Entertainment",
-    "Sports",
-    "Culture",
-    "Energy",
-    "Finance",
-    "Crypto",
-    "Law and Justice",
-];
+// Kalshi-kategorier (source of truth) - läs från config/kalshi_categories.json
+fn load_kalshi_categories() -> Result<Vec<String>> {
+    let content = fs::read_to_string("config/kalshi_categories.json")?;
+    let categories: Vec<String> = serde_json::from_str(&content)?;
+    Ok(categories)
+}
+
+fn get_kalshi_categories() -> Vec<String> {
+    // Läs från config-fil, fallback till hardcoded lista
+    load_kalshi_categories().unwrap_or_else(|_| {
+        vec![
+            "Politics".to_string(),
+            "Elections".to_string(),
+            "Economics".to_string(),
+            "World".to_string(),
+            "Business".to_string(),
+            "Science and Technology".to_string(),
+            "Climate and Weather".to_string(),
+            "Health".to_string(),
+            "Entertainment".to_string(),
+            "Sports".to_string(),
+            "Culture".to_string(),
+            "Energy".to_string(),
+            "Finance".to_string(),
+            "Crypto".to_string(),
+            "Law and Justice".to_string(),
+        ]
+    })
+}
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -589,7 +600,8 @@ async fn show_samples() -> Result<()> {
 
 fn show_categories() -> Result<()> {
     println!("=== KALSHI KATEGORIER (Source of Truth) ===\n");
-    for (idx, category) in KALSHI_CATEGORIES.iter().enumerate() {
+    let categories = get_kalshi_categories();
+    for (idx, category) in categories.iter().enumerate() {
         println!("{}. {}", idx + 1, category);
     }
     Ok(())

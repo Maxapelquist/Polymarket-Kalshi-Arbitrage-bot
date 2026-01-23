@@ -88,7 +88,7 @@ impl EventMatcher {
             }
             
             // Sortera och ta top-K
-            candidates.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
+            candidates.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
             candidates.truncate(self.top_k);
             
             // STAGE 2: LLM verification (high precision)
@@ -222,7 +222,7 @@ impl EmbeddingOnlyMatcher {
             }
             
             // Sortera och ta top-K (DESC by embedding_score)
-            candidates.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
+            candidates.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
             candidates.truncate(self.top_k);
             
             // Bygg kandidatlista
