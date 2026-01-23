@@ -6,6 +6,9 @@ target/
 .env.keys
 test.txt
 kalshi_private_key.txt
+secrets/
+.venv/
+venv/
 
 # Database files
 *.db
@@ -20,11 +23,16 @@ wins_night_*.log
 # Cache and temporary files
 .DS_Store
 *.json.tmp
+*.tmp
 .discovery_cache.json
 match_registry.json
 embeddings.json
 events_*.json
 claude.md
+data/cache/
+__pycache__/
+*.pyc
+*.pyo
 
 # Data outputs (tracked separately or in data/ folder)
 kalshi_raw_markets.json

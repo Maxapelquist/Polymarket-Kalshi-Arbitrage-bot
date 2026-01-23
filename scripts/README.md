@@ -1,248 +1,176 @@
-# Market Similarity Calibration Script
+# Scripts för Data Layer
 
-```
-╔═══════════════════════════════════════════════════════════════════════╗
-║                                                                       ║
-║         This script OBSERVES and MEASURES signal.                    ║
-║         It does NOT match, decide, or threshold.                     ║
-║                                                                       ║
-╚═══════════════════════════════════════════════════════════════════════╝
-```
+Detta dokument beskriver scripten för att bygga market-level data och joinable docs.
 
-## Purpose
+## Översikt
 
-**Signal calibration and understanding** before building matching logic.
+1. **polymarket_build_market_to_event.py** - Bygger market→event mapping för Polymarket
+2. **kalshi_fetch_markets_for_matched_events.py** - Hämtar Kalshi markets/contracts per event_ticker (med signed requests)
+3. **build_event_bridge.py** - Bygger bridge mapping mellan Kalshi event_ticker och Polymarket pm_event_id
+4. **build_market_docs.py** - Bygger market_docs för båda sidor
+5. **sanity_check_docs.py** - Validerar market_docs med bridge coverage
 
-### What it DOES:
-✅ Measures embedding similarity distributions  
-✅ Profiles top-k similarities per market  
-✅ Samples pairs stratified by percentiles  
-✅ Gets descriptive LLM reasoning (free text)  
-✅ Generates transparent reports  
+## Körordning (Pipeline)
 
-### What it DOES NOT do:
-❌ Make matching decisions  
-❌ Set thresholds  
-❌ Auto-group markets  
-❌ Run arbitrage logic  
-❌ Use LLM verdicts or enums  
-
----
-
-## Setup
-
-### 1. Install Python dependencies:
+### Steg 1: Bygg Polymarket market→event mapping
 
 ```bash
-cd scripts
-pip install -r requirements.txt
+python3 scripts/polymarket_build_market_to_event.py
 ```
 
-### 2. Set environment variables:
+**Input:**
+- `data/polymarket/raw/markets_full.json`
+- `data/polymarket/derived/polymarket_events_minimal.json`
 
-Create a `.env` file in the project root:
+**Output:**
+- `data/polymarket/derived/market_to_event.json` (matched markets)
+- `data/polymarket/derived/market_to_event.miss.json` (missed markets med debug-fält)
+
+### Steg 2: Hämta Kalshi markets för matchade events
 
 ```bash
-# OpenAI API (for embeddings)
-OPENAI_API_KEY=your_openai_key
+# Sätt Kalshi API credentials
+export KALSHI_API_KEY_ID="your_key_id"
+export KALSHI_API_SECRET="your_secret"
 
-# Anthropic API (for Claude descriptions)
-ANTHROPIC_API_KEY=your_anthropic_key
+# Kör scriptet
+python3 scripts/kalshi_fetch_markets_for_matched_events.py
 ```
 
----
+**Input:** `data/matching/event_candidates.filtered.json`  
+**Output:** `data/kalshi/derived/kalshi_markets_full.jsonl`
 
-## Usage
+**Notera:** Scriptet använder signed requests (HMAC-SHA256) enligt Kalshi API specifikation.
 
-### Run calibration:
+### Steg 3: Bygg event bridge
 
 ```bash
-# From project root
-python scripts/calibrate_similarity.py
+python3 scripts/build_event_bridge.py
 ```
 
-### What happens:
+**Input:** `data/matching/event_candidates.filtered.json` (eller `event_candidates.json`)  
+**Output:** `data/matching/event_bridge.json`
 
-1. **Loads active markets** from JSONL files
-2. **Generates embeddings** (EVENT + TIME WINDOW)
-3. **Computes similarities** (all Kalshi × Polymarket pairs)
-4. **Profiles distributions** (top-1, top-5, top-20 per market)
-5. **Stratified sampling** (using percentiles, not fixed thresholds)
-6. **LLM descriptions** (free text reasoning, no verdicts)
-7. **Generates reports** in `data/reports/`
+### Steg 4: Bygg market_docs
 
----
+```bash
+python3 scripts/build_market_docs.py
+```
 
-## Output Files
+**Input:**
+- `data/polymarket/raw/markets_full.json`
+- `data/polymarket/derived/market_to_event.json`
+- `data/kalshi/derived/kalshi_markets_full.jsonl` (market-level, INTE raw events)
 
-All reports saved to `data/reports/`:
+**Output:**
+- `data/polymarket/derived/polymarket_market_docs.jsonl`
+- `data/kalshi/derived/kalshi_market_docs.jsonl`
 
-### `baseline_counts.json`
-Raw counts of active markets per platform.
+### Steg 5: Sanity check (med bridge coverage)
 
-### `similarity_profiles.json`
-Top-k similarity scores for each Kalshi market.
+```bash
+python3 scripts/sanity_check_docs.py
+```
 
-**Example:**
+Kontrollerar:
+- Counts (total docs, unique event_id)
+- Top 10 events med flest markets (per sida)
+- Bridge coverage (hur många markets faller under bridgade events)
+- Exempel på bridgade eventpar med titles
+- Kvalitetskontroller (tomma market_id, event_id coverage)
+
+## Data Format
+
+### kalshi_markets_full.jsonl
+
+En rad per market/contract:
 ```json
 {
-  "kalshi_fingerprint": "abc123...",
-  "kalshi_ticker": "KXEPLGAME-...",
-  "top_1_score": 0.8234,
-  "top_5_scores": [0.8234, 0.7891, 0.7456, ...],
-  "top_20_scores": [...]
+  "event_ticker": "KXELONMARS-99",
+  "market_ticker": "KXELONMARS-99-Y",
+  "title": "Will Elon Musk visit Mars in his lifetime?",
+  "subtitle": "Before 2099",
+  "category": "World",
+  "yes_bid": 0.45,
+  "yes_ask": 0.50,
+  "raw": {...}
 }
 ```
 
-### `sampled_pairs_for_llm.json`
-Pairs selected for LLM analysis, stratified by similarity.
+### polymarket_market_docs.jsonl
 
-**Buckets:**
-- **High**: Top 33rd percentile
-- **Medium**: 33rd-67th percentile  
-- **Low**: Bottom 33rd percentile
-
-### `llm_descriptions.json`
-Claude's descriptive analysis of sampled pairs.
-
-**Example:**
+En rad per market:
 ```json
 {
-  "kalshi_fingerprint": "abc123...",
-  "polymarket_fingerprint": "def456...",
-  "similarity_score": 0.8234,
-  "bucket": "high",
-  "llm_description": "Market A predicts UEFA Champions League...\nMarket B also concerns UEFA...\nThey appear to relate to the same underlying event..."
+  "market_id": "0xaf9d0e448129a9f657f851d49495ba4742055d80e0ef1166ba0ee81d4d594214",
+  "event_id": "pm_deportation-count",
+  "title": "Will Trump deport less than 250,000?",
+  "subtitle": "During the 2024 FY ICE removed...",
+  "category": "",
+  "text": "Will Trump deport less than 250,000? | During the 2024 FY... | Event: How many people will Trump deport in 2025? | Slug: how-many-people-will-trump-deport-in-2025"
 }
 ```
 
-### `calibration_summary.txt`
-Human-readable summary with distribution statistics.
+### kalshi_market_docs.jsonl
 
----
-
-## Configuration
-
-Edit `CalibrationConfig` in the script:
-
-```python
-@dataclass
-class CalibrationConfig:
-    # Embedding model
-    embedding_model: str = "text-embedding-3-small"
-    
-    # LLM model
-    llm_model: str = "claude-sonnet-4-20250514"
-    llm_temperature: float = 0.0
-    
-    # Sampling
-    sample_size_per_bucket: int = 10  # Pairs per similarity bucket
-    
-    # Top-k profiling
-    top_k_similarities: List[int] = [1, 5, 20]
+En rad per market:
+```json
+{
+  "market_id": "KXELONMARS-99-Y",
+  "event_id": "KXELONMARS-99",
+  "title": "Will Elon Musk visit Mars in his lifetime?",
+  "subtitle": "Before 2099",
+  "category": "World",
+  "text": "Will Elon Musk visit Mars in his lifetime? | Before 2099 | Category: World | Event: Will Elon Musk visit Mars in his lifetime?"
+}
 ```
-
----
-
-## Interpreting Results
-
-### 1. Similarity Distribution
-
-Look at `calibration_summary.txt`:
-
-```
-Min similarity: 0.3245
-25th percentile: 0.5123
-Median: 0.6234
-75th percentile: 0.7456
-Max similarity: 0.9123
-```
-
-**Questions to ask:**
-- Is there clear separation between "related" and "unrelated"?
-- Where do most scores cluster?
-- Are there natural breakpoints?
-
-### 2. LLM Descriptions
-
-Review `llm_descriptions.json`:
-
-**Look for:**
-- **High similarity + LLM sees connection** → Good signal
-- **High similarity + LLM sees difference** → Embedding blindspot
-- **Low similarity + LLM sees connection** → Missed by embeddings
-- **Low similarity + LLM agrees** → True negatives
-
-### 3. Manual Sanity Check
-
-```bash
-# View high similarity pairs
-jq '.descriptions[] | select(.bucket == "high")' data/reports/llm_descriptions.json
-
-# View low similarity pairs  
-jq '.descriptions[] | select(.bucket == "low")' data/reports/llm_descriptions.json
-
-# Find divergences (high similarity but LLM says different)
-# → Read LLM descriptions manually
-```
-
----
-
-## Next Steps (After Review)
-
-Based on calibration insights:
-
-1. **If embeddings alone are sufficient:**
-   - Design threshold-based matching
-   - Use LLM only for edge cases
-
-2. **If embeddings miss important cases:**
-   - Design hybrid approach
-   - Use LLM more extensively
-   - Consider different embedding strategies
-
-3. **If signal is weak:**
-   - Revisit embedding text (include RULES?)
-   - Try different embedding models
-   - Consider pure LLM-driven approach
-
----
-
-## Important Reminders
-
-⚠️ **This is NOT matching logic** - it's signal calibration  
-⚠️ **NO decisions are automated** - human review required  
-⚠️ **NO thresholds are set** - that comes later with context  
-
-**Review the data. Understand the distributions. Then design matching logic with full insight.**
-
----
 
 ## Troubleshooting
 
-### "OpenAI API error"
-Check your `OPENAI_API_KEY` in `.env`
+### Kalshi API authentication errors
 
-### "Anthropic API error"
-Check your `ANTHROPIC_API_KEY` in `.env`
+Om du får 401/403 errors:
+1. Kontrollera att `KALSHI_API_KEY_ID` och `KALSHI_API_SECRET` är satta
+2. Scriptet använder signed requests (HMAC-SHA256) - kontrollera att credentials är korrekta
+3. Kalshi API kräver timestamp och signature i headers - se `sign_kalshi_request()` funktionen
 
-### "File not found: kalshi_markets_structured.jsonl"
-Run the main observation pipeline first:
-```bash
-cargo run --release
-```
+### Tomma market_id i Kalshi
 
-### "Too many API calls"
-Reduce `sample_size_per_bucket` in config (default: 10)
+Om `market_ticker` är tom i `kalshi_markets_full.jsonl`:
+- Kalshi API returnerar markets med `ticker` field
+- Kontrollera att API-anropet fungerar korrekt
+- Kolla `raw` field för debugging
 
----
+### Låg mapping rate för Polymarket
 
-## Design Philosophy
+Om `market_to_event.json` har få mappings:
+- Kontrollera att `polymarket_events_minimal.json` har korrekta `synthetic_event_id` (pm_<slug>)
+- Kolla `market_to_event.miss.json` för att se varför markets missade
+- Förbättra `extract_event_candidates()` i `polymarket_build_market_to_event.py`
 
-> **"Measure before you match. Understand before you automate."**
+## Definition of Done
 
-This script provides **transparent measurement** of similarity signal.
+✅ **Kalshi market-level data:**
+- `kalshi_markets_full.jsonl` innehåller market_ticker (inte tom) för ~100% av fetched markets
+- Minst ett prisfält (bid/ask/last) per market
 
-No black boxes. No hidden thresholds. No auto-decisions.
+✅ **Polymarket market→event mapping:**
+- Mapping rate ≥ nuvarande (319/500) med miss-fil
+- `market_to_event.miss.json` innehåller alla debug-fält (events[0].ticker, slug, seriesSlug, etc.)
 
-Just **data, distributions, and descriptive insights** to inform the next design step.
+✅ **Market docs:**
+- Båda market_docs JSONL genereras med market_id, event_id, text
+- Kalshi market_docs har market_id coverage ~100% för fetched markets
+- Polymarket market_docs har event_id coverage = mapped/total
+
+✅ **Bridge coverage:**
+- Minst X bridgade eventpar (från top-1 candidates)
+- Minst Y markets på båda sidor under bridgade events
+- sanity_check visar bridge coverage, inte direkt event_id overlap
+
+## Nästa steg
+
+Efter att market_docs är byggda kan du:
+1. Köra contract-level matching (PHASE 4)
+2. Bygga arbitrage-scanner (PHASE 5)
+3. Använda market_docs för embedding-based contract matching

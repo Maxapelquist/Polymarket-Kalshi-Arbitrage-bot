@@ -1,0 +1,86 @@
+[
+  {
+    "kalshi_event_ticker": "CONTROLH-2026",
+    "pm_event_id": "pm_which-party-will-win-the-house-in-2026",
+    "score": 0.7714636775291669,
+    "margin": 0.06350541129317389,
+    "top3_candidates": [
+      {
+        "pm_event_id": "pm_which-party-will-win-the-house-in-2026",
+        "score": 0.7714636775291669
+      },
+      {
+        "pm_event_id": "pm_which-party-will-win-the-senate-in-2026",
+        "score": 0.707958266235993
+      },
+      {
+        "pm_event_id": "pm_balance-of-power-2026-midterms",
+        "score": 0.6910754741533449
+      }
+    ],
+    "source": "high_conf"
+  },
+  {
+    "kalshi_event_ticker": "CONTROLS-2026",
+    "pm_event_id": "pm_which-party-will-win-the-senate-in-2026",
+    "score": 0.7905875295428023,
+    "margin": 0.08079568243261515,
+    "top3_candidates": [
+      {
+        "pm_event_id": "pm_which-party-will-win-the-senate-in-2026",
+        "score": 0.7905875295428023
+      },
+      {
+        "pm_event_id": "pm_texas-republican-senate-primary-winner",
+        "score": 0.7097918471101872
+      },
+      {
+        "pm_event_id": "pm_which-party-will-win-the-house-in-2026",
+        "score": 0.7056077283325096
+      }
+    ],
+    "source": "high_conf"
+  },
+  {
+    "kalshi_event_ticker": "KXNBA-26",
+    "pm_event_id": "pm_2026-nba-champion",
+    "score": 0.7751881064019362,
+    "margin": 0.06369301245351244,
+    "top3_candidates": [
+      {
+        "pm_event_id": "pm_2026-nba-champion",
+        "score": 0.7751881064019362
+      },
+      {
+        "pm_event_id": "pm_nba-eastern-conference-champion-442",
+        "score": 0.7114950939484238
+      },
+      {
+        "pm_event_id": "pm_2026-nhl-stanley-cup-champion",
+        "score": 0.6726128964220032
+      }
+    ],
+    "source": "high_conf"
+  },
+  {
+    "kalshi_event_ticker": "KXNHL-26",
+    "pm_event_id": "pm_2026-nhl-stanley-cup-champion",
+    "score": 0.7723043053473091,
+    "margin": 0.06114555175341263,
+    "top3_candidates": [
+      {
+        "pm_event_id": "pm_2026-nhl-stanley-cup-champion",
+        "score": 0.7723043053473091
+      },
+      {
+        "pm_event_id": "pm_nba-eastern-conference-champion-442",
+        "score": 0.7111587535938965
+      },
+      {
+        "pm_event_id": "pm_2026-nba-champion",
+        "score": 0.7095193932738626
+      }
+    ],
+    "source": "high_conf"
+  }
+]

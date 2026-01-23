@@ -1,146 +1,155 @@
-# Kalshi Market Observer
+# Polymarket-Kalshi Arbitrage Bot
 
-```
-╔═══════════════════════════════════════════════════════════════════════╗
-║                                                                       ║
-║         This branch observes Kalshi reality.                         ║
-║         It does not attempt to understand it.                        ║
-║                                                                       ║
-╚═══════════════════════════════════════════════════════════════════════╝
-```
+AI-based event and contract matching system for Kalshi ↔ Polymarket arbitrage opportunities.
 
-## Branch: `raw-kalshi-v4-clean`
+## Overview
 
-Detta är en **ren observationsbas** för Kalshi markets. Ingen tolkning. Ingen matchning. Ingen AI. Bara rådata.
+This system builds a knowledge graph connecting events and contracts between Kalshi and Polymarket prediction markets, enabling automated arbitrage detection.
 
-## Vad gör detta program?
+## Architecture
 
-### Pipeline: RAW → STRUCTURED
+### PHASE 1: Full Data Ingestion
+- Fetch ALL Kalshi events with categories
+- Fetch ALL Polymarket markets
+- Store raw data for processing
 
-1. 🔍 **Hämtar ALLA Kalshi events** via `/events` API med cursor-paginering
-2. 📦 **Sparar komplett rådata** → `data/kalshi/raw/kalshi_raw_markets.json`
-3. 🔄 **Mekanisk strukturering** (ingen AI) → `data/kalshi/structured/kalshi_markets_structured.jsonl`
-4. ✅ **AI-ready format** för nästa steg
+### PHASE 2: Semantic Categorization
+- Classify Polymarket events into Kalshi's category taxonomy using local LLM
+- Store confidence scores and rationale
 
-### 🚫 GÖR INTE:
-- Ingen filtrering
-- Ingen tolkning  
-- Ingen arbitrage-logik
-- Ingen Polymarket-integration
-- Ingen AI-matchning (ännu)
+### PHASE 3: Event-level Semantic Matching
+- Match events within the same category using local LLM
+- Two-stage process: candidate retrieval → pair decision
+- High-confidence bridges only (confidence >= 0.80)
 
-## Struktur
+### PHASE 4: Contract-level Matching
+- Match individual markets/contracts within matched events
+- Enable precise arbitrage detection
 
-```
-src/
-├── main.rs       # Kör observation och sparar till JSON
-├── kalshi.rs     # Ren Kalshi API-klient (auth + fetch)
-├── types.rs      # Rådata-typer (1:1 mapping av API)
-├── config.rs     # Endast API URLs och delays
-└── lib.rs        # Modul-exports
-```
+### PHASE 5: Runtime Scanning
+- Scan odds, liquidity, and timing
+- No AI models used (only price data)
 
-## Vad har tagits bort?
+## Setup
 
-✅ **Borttaget från detta branch:**
-- `src/polymarket.rs` - Hela Polymarket-integration
-- `src/polymarket_clob.rs` - CLOB-klient
-- `src/execution.rs` - Order execution
-- `src/discovery.rs` - Gammal discovery-logik
-- `src/matcher/` - All AI/embeddings-logik
-- `src/circuit_breaker.rs`
-- `src/position_tracker.rs`
-- `src/cache.rs`
-- `src/db.rs`
-- `scripts/generate_embeddings.py`
+### Prerequisites
 
-✅ **Behållet från Kalshi:**
-- `KalshiConfig` - Auth och signering
-- `KalshiApiClient` - HTTP-klient med retry/rate limit
-- `discover_all_events_paginated()` - Cursor-paginering
-- Headers, base URL, rate limit-logik
+- Rust (latest stable)
+- Python 3.10+
+- Local LLM server (Ollama, LM Studio, or llama.cpp)
 
-## Kör programmet
+### Installation
 
 ```bash
-# Sätt miljövariabler
-export KALSHI_API_KEY_ID="your_key_id"
-# Private key läses från test.txt (default) eller KALSHI_PRIVATE_KEY_PATH
+# Rust dependencies
+cargo build
 
-# Kör observation
-cargo run --release
-
-# Output: kalshi_raw_markets.json
+# Python dependencies
+python3 -m venv .venv
+source .venv/bin/activate
+pip install sentence-transformers numpy tqdm requests
 ```
 
-## Output-format
+### LLM Configuration
 
-### RAW (`data/kalshi/raw/kalshi_raw_markets.json`)
-
-Varje market sparas som en `RawMarketObservation`:
-
-```json
-{
-  "event_ticker": "KXEPLGAME-25JAN13CHEARS",
-  "series_ticker": "KXEPLGAME",
-  "market_ticker": "KXEPLGAME-25JAN13CHEARS-CHE",
-  "title": "Will Chelsea win vs Arsenal on Jan 13?",
-  "subtitle": "Premier League match",
-  "rules": "Match result at 90 minutes + added time",
-  "open_time": "2025-01-10T12:00:00Z",
-  "close_time": "2025-01-13T19:00:00Z",
-  "status": "open",
-  "raw_json": { ... }
-}
+```bash
+export LOCAL_LLM_PROVIDER=ollama  # or lmstudio, llamacpp
+export LOCAL_LLM_BASE_URL=http://localhost:11434
+export LOCAL_LLM_MODEL=llama3.2
+export LOCAL_LLM_TEMPERATURE=0
+export LOCAL_LLM_MAX_TOKENS=2048
 ```
 
-### STRUCTURED (`data/kalshi/structured/kalshi_markets_structured.jsonl`)
+Start LLM server:
+```bash
+# Ollama
+ollama serve
+ollama pull llama3.2
 
-AI-ready format (en rad per market):
-
-```json
-{
-  "source": "kalshi",
-  "market_ticker": "KXEPLGAME-25JAN13CHEARS-CHE",
-  "event_ticker": "KXEPLGAME-25JAN13CHEARS",
-  "series_ticker": "KXEPLGAME",
-  "event_text": "Will Chelsea win vs Arsenal on Jan 13?",
-  "rules_text": "Premier League match | Regular time + injury time",
-  "category": null,
-  "time_window": {
-    "open": "2025-01-10T12:00:00Z",
-    "close": "2025-01-13T19:00:00Z"
-  },
-  "status": "open",
-  "raw_json": { ... }
-}
+# LM Studio: Start server on port 1234
+# llama.cpp: ./server -m model.gguf --port 8080
 ```
 
-Se [AI_SCHEMA.md](./AI_SCHEMA.md) för fullständig schema-dokumentation.
+## Usage
 
-## Nästa steg (INTE i denna branch)
+### Data Ingestion
 
-I nästa branch kommer vi att:
+```bash
+# Fetch Kalshi events
+cargo run ingest_kalshi
 
-1. 🤖 **Mata rådata till state-of-the-art LLM**
-2. 📖 **Låta modellen läsa kontrakt och regler**
-3. 🧠 **Gruppera markets som en människa skulle göra**
-4. 🎯 **Bygga probabilistisk matchning**
+# Fetch Polymarket markets
+cargo run ingest_polymarket
+```
 
-Men först måste vi ha perfekt rå input. **Detta är det.**
+### Event Classification
 
-## Designprincip
+```bash
+# Classify events to categories
+python3 scripts/llm_classify_events.py
+```
 
-> **"This branch observes Kalshi reality. It does not attempt to understand it."**
+### Event Matching
 
-Detta betyder:
-- Vi fetchar ALLT
-- Vi sparar ALLT
-- Vi tolkar INGET
-- Nästa steg får göra tolkningen
+```bash
+# Match events within categories
+python3 scripts/llm_match_events_within_category.py
+```
 
----
+### Market-level Data
 
-**Branch:** `raw-kalshi-v4-clean`  
-**Status:** ✅ Klar för observation  
-**Nästa:** AI-driven market grouping
+```bash
+# Build Polymarket market→event mapping
+python3 scripts/polymarket_build_market_to_event.py
+
+# Fetch Kalshi markets for matched events
+export KALSHI_API_KEY_ID="..."
+export KALSHI_API_SECRET="..."
+python3 scripts/kalshi_fetch_markets_for_matched_events.py
+
+# Build market docs
+python3 scripts/build_market_docs.py
+
+# Build event bridge
+python3 scripts/build_event_bridge.py
+```
+
+### Verification
+
+```bash
+# Sanity checks
+python3 scripts/sanity_check_docs.py
+```
+
+## Project Structure
+
+```
+.
+├── src/                    # Rust source code
+│   ├── main.rs            # CLI entry point
+│   ├── ai/                # AI abstractions (embedding, LLM)
+│   └── matching/          # Matching logic
+├── scripts/               # Python scripts
+│   ├── embed.py           # Embedding generation
+│   ├── llm_classify_events.py
+│   ├── llm_match_events_within_category.py
+│   └── ...
+├── config/                # Configuration files
+│   └── kalshi_categories.json
+└── data/                  # Data storage
+    ├── kalshi/
+    ├── polymarket/
+    └── matching/
+```
+
+## Features
+
+- **Local AI**: All AI inference runs locally (no external APIs)
+- **Checkpoint/Resume**: Can resume interrupted runs
+- **Caching**: LLM responses cached to disk
+- **Deterministic**: Temperature=0, fixed prompts
+- **Robust**: Rate limiting, backoff, error handling
+
+## License
+
+[Your License Here]

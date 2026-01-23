@@ -1,0 +1,1278 @@
+[
+  {
+    "market_id": "0xaf9d0e448129a9f657f851d49495ba4742055d80e0ef1166ba0ee81d4d594214",
+    "event_id": "pm_deportation-count"
+  },
+  {
+    "market_id": "0x49686d26fb712515cd5e12c23f0a1c7e10214c7faa3cb0a730aabe0c33694082",
+    "event_id": "pm_deportation-count"
+  },
+  {
+    "market_id": "0x2393ed0b0fdc450054c7b9071907eca75cf4fc36e385adf4a0a5f99ee62243e8",
+    "event_id": "pm_deportation-count"
+  },
+  {
+    "market_id": "0x44f08744458b8896620cd3330bc5e1ea69df4199b02d4fc583b3fc96e5d314ce",
+    "event_id": "pm_deportation-count"
+  },
+  {
+    "market_id": "0x49a20c7523c271099008f3ef9a31521263b24d637959852a391e6b4697b1a437",
+    "event_id": "pm_deportation-count"
+  },
+  {
+    "market_id": "0x9472be65457510b7fc3477b20ba90910e99d92eac8421a14bf4b7b7a08ef31dc",
+    "event_id": "pm_deportation-count"
+  },
+  {
+    "market_id": "0xc55db914f0fd1fee18997706712c0dfd8d0369cdbef93a9fef12bd001914ca77",
+    "event_id": "pm_deportation-count"
+  },
+  {
+    "market_id": "0x50c669f178da4e5bbea7f1be25041fd278914712fa87a6a6f8e57d5923d88dee",
+    "event_id": "pm_deportation-count"
+  },
+  {
+    "market_id": "0xb9bbdd34304344dcc45803780a34c97d73a00133a5ecf70f63e1008b8abb2fca",
+    "event_id": "pm_deportation-count"
+  },
+  {
+    "market_id": "0xe9c127a8c35f045d37b5344b0a36711084fa20c2fc1618bf178a5386f90610be",
+    "event_id": "pm_will-elon-cut-the-budget-by-at-least-10-in-2025"
+  },
+  {
+    "market_id": "0xcab7ba4a9133cfd407d7e73e5757e5abbace413b59421527a31113406c97815c",
+    "event_id": "pm_will-elon-cut-the-budget-by-at-least-5-in-2025"
+  },
+  {
+    "market_id": "0xae5584fbb57f23c1c608d544b656f23d8bf12340cef70811cf31bb0cb4fc2115",
+    "event_id": "pm_will-gta-6-cost-100"
+  },
+  {
+    "market_id": "0x3061dcc85903c2700dffd529e0fbd9b0023c3b481324cd0276d5399f9dace5dc",
+    "event_id": "pm_rojas-guilty-in-texas-illegal-abortion-case"
+  },
+  {
+    "market_id": "0xe7664a539f6127fbfddad20f2cc362ef458cc1ccdf29f5ac23a6e409c402d8fd",
+    "event_id": "pm_senator-eichorn-guilty-of-soliciting-a-child"
+  },
+  {
+    "market_id": "0xb48621f7eba07b0a3eeabc6afb09ae42490239903997b9d412b0f69aeb040c8b",
+    "event_id": "pm_bitboy-convicted"
+  },
+  {
+    "market_id": "0x2b40914f66cf5195d84f5934b3c297919342ebb3c032fabb709b7d87ae67e14e",
+    "event_id": "pm_negative-gdp-growth-in-2025"
+  },
+  {
+    "market_id": "0x9c1a953fe92c8357f1b646ba25d983aa83e90c525992db14fb726fa895cb5763",
+    "event_id": "pm_what-will-happen-before-gta-vi"
+  },
+  {
+    "market_id": "0x1fad72fae204143ff1c3035e99e7c0f65ea8d5cd9bd1070987bd1a3316f772be",
+    "event_id": "pm_what-will-happen-before-gta-vi"
+  },
+  {
+    "market_id": "0x50ddb9cd80d5c271664a2ebb7fcaed1d0a148d82c8e8d314d830f75a944c3dcc",
+    "event_id": "pm_what-will-happen-before-gta-vi"
+  },
+  {
+    "market_id": "0x32b09f6390252b37d674501527e709016d55581b2c1e544bd4b8167f5f732f4c",
+    "event_id": "pm_what-will-happen-before-gta-vi"
+  },
+  {
+    "market_id": "0x84f8b70331323c2fba97d7ceaa9a35fb645a0770d0dbff169d07f24f376766e9",
+    "event_id": "pm_what-will-happen-before-gta-vi"
+  },
+  {
+    "market_id": "0x7b49b9bacb5f435bc10f3b100ff59e2fdd346f7f92a9001881bc9825a0af0f11",
+    "event_id": "pm_what-will-happen-before-gta-vi"
+  },
+  {
+    "market_id": "0xbb57ccf5853a85487bc3d83d04d669310d28c6c810758953b9d9b91d1aee89d2",
+    "event_id": "pm_what-will-happen-before-gta-vi"
+  },
+  {
+    "market_id": "0xcccb7e7613a087c132b69cbf3a02bece3fdcb824c1da54ae79acc8d4a562d902",
+    "event_id": "pm_gta-vi-released-before-june-2026"
+  },
+  {
+    "market_id": "0xa1e73b6f355dc99b3b7fb90f41cdc612c63902429fd032e07d2ec1d48d074d8a",
+    "event_id": "pm_nfl-coach-of-the-year"
+  },
+  {
+    "market_id": "0x7d83ff41dd492f5110cc8083e652f343fada80a2cd090e73cad3ccb1566b706a",
+    "event_id": "pm_nfl-coach-of-the-year"
+  },
+  {
+    "market_id": "0x66fd971b3f14da3d103bc77b28e39935f0a1d9f3eb95fef09ddd3bffcc8e57cf",
+    "event_id": "pm_nfl-coach-of-the-year"
+  },
+  {
+    "market_id": "0x59829424978a783d4a321f27bb1efcb4c6a5ea7e3bc9b8c389a0e89e18df50fd",
+    "event_id": "pm_nfl-coach-of-the-year"
+  },
+  {
+    "market_id": "0xca2a80c218707f71b9e6900cdb87f8f566e69490b1c9366afb0c4c0c2fbda9ae",
+    "event_id": "pm_nfl-coach-of-the-year"
+  },
+  {
+    "market_id": "0x69b285776207f399f1c7f19096edca61ec82c2c573295bdd0199510b56e8d635",
+    "event_id": "pm_nfl-coach-of-the-year"
+  },
+  {
+    "market_id": "0x2dd021d9939d67e53f143bcf986cb017d5b00411f8ba836b172c816d6fbe46f6",
+    "event_id": "pm_nfl-coach-of-the-year"
+  },
+  {
+    "market_id": "0x72ff1ee67287710e5975073bba115128b452c93abc83ce282b15a114d3529073",
+    "event_id": "pm_nfl-coach-of-the-year"
+  },
+  {
+    "market_id": "0x35eefe953bab3f51a1062923ed4a0dd93bac834edf5acd605a722514ae723282",
+    "event_id": "pm_nfl-coach-of-the-year"
+  },
+  {
+    "market_id": "0x842d031d7ef0fcfb06ed4e8a58a1f73eeba88cb9aa94e5088c59a62c63473567",
+    "event_id": "pm_nfl-coach-of-the-year"
+  },
+  {
+    "market_id": "0x4a21c55ba98b650f4d9e7177a789dcb666e9db32e05e46848c1cc0ef5371c307",
+    "event_id": "pm_nfl-coach-of-the-year"
+  },
+  {
+    "market_id": "0x45432f039dc3e1c12acb0da2f9142f5a9bd25362fb5c7182366386c3b2f3f2f0",
+    "event_id": "pm_nfl-coach-of-the-year"
+  },
+  {
+    "market_id": "0x38e87068cc85d91fbe3516bfe9738517b02bc05f46e3424edefb91ad1179596d",
+    "event_id": "pm_nfl-coach-of-the-year"
+  },
+  {
+    "market_id": "0x79b539260a906851f5b097a2fe73d6dda9c6cc6964d3eae0abffcf97cc4bd20c",
+    "event_id": "pm_nfl-coach-of-the-year"
+  },
+  {
+    "market_id": "0x7c8501dc2a1333c419d454db6908410c8cf3b4d184bc3479e3cd5a045ec807b4",
+    "event_id": "pm_nfl-coach-of-the-year"
+  },
+  {
+    "market_id": "0xce7163633c47e499ff59228ff0f893a4ebfc02bb4df147507fe8dc0c6a66a4c8",
+    "event_id": "pm_nfl-coach-of-the-year"
+  },
+  {
+    "market_id": "0x41a3878752a1997cbaeb1500163052e5964c64eb402af46e6ceecdc30c0c5ee0",
+    "event_id": "pm_nfl-coach-of-the-year"
+  },
+  {
+    "market_id": "0xb2868608c2fe038b926ff5658408d06060d953eb81417d8743abfa1e9532cce9",
+    "event_id": "pm_nfl-coach-of-the-year"
+  },
+  {
+    "market_id": "0xc0b415523c2b2fea80b37899a4431a058f82474208f2d10df444c95430fd519a",
+    "event_id": "pm_nfl-coach-of-the-year"
+  },
+  {
+    "market_id": "0xf03665716077a95d47d33374069fd21d71caace2f2f4e7d9aed84d23473f5555",
+    "event_id": "pm_nfl-coach-of-the-year"
+  },
+  {
+    "market_id": "0x7b657f48e70998e558f388ec852b8ceae7cfc4b3cc009908edcae6320cd2cc9a",
+    "event_id": "pm_nfl-coach-of-the-year"
+  },
+  {
+    "market_id": "0x9c3661ccc01b2fe2af808a39980e3e8fb9c8afdae6fc2feba2a4438a4f4d7059",
+    "event_id": "pm_nfl-coach-of-the-year"
+  },
+  {
+    "market_id": "0xe55b776a53a5e2208203a78168c03535d73a7986cc84fcab362c40c4661610dc",
+    "event_id": "pm_nfl-coach-of-the-year"
+  },
+  {
+    "market_id": "0xbb62f3f7aa257f497f669a4a414b239a47908b34b34fa922e205d654b15e76ea",
+    "event_id": "pm_nfl-coach-of-the-year"
+  },
+  {
+    "market_id": "0x454d10bb9b345d7e1558a50f550b7c3f37c0b48e2944e6bd2d3a006bfcd7fe33",
+    "event_id": "pm_nfl-coach-of-the-year"
+  },
+  {
+    "market_id": "0x149cf1c9e26a8cf5322d665e0787899e85ec124855d8ced7d56562da06d7380a",
+    "event_id": "pm_nfl-coach-of-the-year"
+  },
+  {
+    "market_id": "0x03faa8102a0cfe59caaf89c2f84cbfeea82c3c89afd37d0ed47c126625fd548a",
+    "event_id": "pm_nfl-coach-of-the-year"
+  },
+  {
+    "market_id": "0x02fd595e0aceefd139d02598eedb734a1a207c707d198e21b87da2878c079dfa",
+    "event_id": "pm_nfl-coach-of-the-year"
+  },
+  {
+    "market_id": "0x1b07d517671f9d36a4b6dca473165e9469ebea15fca4dadadfadcbf75c46cda0",
+    "event_id": "pm_nfl-coach-of-the-year"
+  },
+  {
+    "market_id": "0x8014a8e6dbce5425a4004edee87522acd63a440e638256b3140da23fabc9080e",
+    "event_id": "pm_nfl-coach-of-the-year"
+  },
+  {
+    "market_id": "0x7e2a6f4a070a3e4b8721b3b1283a2e4fba0f2551c05b39d90f8ce2b967980ca6",
+    "event_id": "pm_nfl-coach-of-the-year"
+  },
+  {
+    "market_id": "0x62fbc228c2c453c9dac2018f0d205a0ab8d0d3d8a2a913f41190e1a10efab7b3",
+    "event_id": "pm_nfl-coach-of-the-year"
+  },
+  {
+    "market_id": "0xf398b0e5016eeaee9b0885ed84012b6dc91269ac10d3b59d60722859c2e30b2f",
+    "event_id": "pm_harvey-weinstein-prison-time"
+  },
+  {
+    "market_id": "0xe2b48e3b44de9658ee9c8b37354301763e33c0b502fd966839d644b4c0a9dea8",
+    "event_id": "pm_harvey-weinstein-prison-time"
+  },
+  {
+    "market_id": "0x3209617364a0d598435806b59d0d056b606022dc9028c466ad7912df94fc170c",
+    "event_id": "pm_harvey-weinstein-prison-time"
+  },
+  {
+    "market_id": "0x3d495a3e05eaffe438bb1c2ab97ed57a79b0a6ab18a2ca6fa5b448e20ce70082",
+    "event_id": "pm_harvey-weinstein-prison-time"
+  },
+  {
+    "market_id": "0xdee5db5410b362783a1405b66b9aa08a7d050ae1f99e8da85b9d1ae7962dad3b",
+    "event_id": "pm_harvey-weinstein-prison-time"
+  },
+  {
+    "market_id": "0x2499928ffbe6022444543dcd940075259cecb5e41e346284b578cb64e1404d32",
+    "event_id": "pm_harvey-weinstein-prison-time"
+  },
+  {
+    "market_id": "0x19ad2d16b6fc580470ebe911c17c388f8edb346789c6586d2c00355592daa0fe",
+    "event_id": "pm_nfl-protector-of-the-year"
+  },
+  {
+    "market_id": "0xefe60a4c139354628ea69477085d74a08731d6ccd8b85d4ff34f11899b0ccd12",
+    "event_id": "pm_nfl-protector-of-the-year"
+  },
+  {
+    "market_id": "0x02ecbf01b785dc69e90abfc5c30a0e9dcb882faabb8737e5400378a409ba29dc",
+    "event_id": "pm_nfl-protector-of-the-year"
+  },
+  {
+    "market_id": "0x0dba8788165b8a0029dbabff66235a20eee825224b613dcbf0c64a14b186911e",
+    "event_id": "pm_nfl-protector-of-the-year"
+  },
+  {
+    "market_id": "0xdcd2dfb841fb63f8d9a6fed2c88a6a287dafcfd6dfa230cf94e08d33e942a346",
+    "event_id": "pm_nfl-protector-of-the-year"
+  },
+  {
+    "market_id": "0xa18bfdcef2d8a7a1e3e8858a161f00a4c2876f2536a6e98d2743b81912b2511f",
+    "event_id": "pm_nfl-protector-of-the-year"
+  },
+  {
+    "market_id": "0x0134bfacb402c55ee0c80a738e1461ec9e6c94d5557ca22340984a2fbcd1785f",
+    "event_id": "pm_nfl-protector-of-the-year"
+  },
+  {
+    "market_id": "0x06883b0652ae9e78f226de17fcee4c441f55fbd4d7439b605213ab5175efe516",
+    "event_id": "pm_nfl-protector-of-the-year"
+  },
+  {
+    "market_id": "0x0fb742bcb06b325c6dcb52dce369fdfb53471fd45c31c8a9cd52733b7c3712a9",
+    "event_id": "pm_nfl-protector-of-the-year"
+  },
+  {
+    "market_id": "0x50d6f5d6d6a2b70e3e5d195f1dc3df9accbeb9e9f814a248c7133968032d14f6",
+    "event_id": "pm_nfl-protector-of-the-year"
+  },
+  {
+    "market_id": "0x37c2419fcf852758362fdeabcc97dda6c91ff3f47d24de11f277ad4b6c24c145",
+    "event_id": "pm_nfl-protector-of-the-year"
+  },
+  {
+    "market_id": "0xcca0101e8e7d8d7ff6dc847e3ef011f94665b4d4ad5f85079d65bfe7e77bb5ee",
+    "event_id": "pm_nfl-protector-of-the-year"
+  },
+  {
+    "market_id": "0xa1500fcd0317e7a2e06146f899eef289589defabe741c1e9115df9abb9b5753a",
+    "event_id": "pm_nfl-protector-of-the-year"
+  },
+  {
+    "market_id": "0x0da6e54b118aa53141055501e510c68b50909ef63b161c96f6a74ba9af939858",
+    "event_id": "pm_nfl-protector-of-the-year"
+  },
+  {
+    "market_id": "0xae7afa9730d5010a133d9f073fd75f5acc3615e45465acb8b6d7be155db3f004",
+    "event_id": "pm_nfl-protector-of-the-year"
+  },
+  {
+    "market_id": "0x7c02185b2011f0fc282b6837ad381f2656ab2b62ac25c0936b983b92f64ad5fb",
+    "event_id": "pm_nfl-protector-of-the-year"
+  },
+  {
+    "market_id": "0x0c53d2914ea8620b6341151c8933f866093b066aa839086c2fe7adcbd9647972",
+    "event_id": "pm_nfl-protector-of-the-year"
+  },
+  {
+    "market_id": "0xc7951294548441bb20b9b168ee425109c32977e4f411ec20d756c4777eed3dc8",
+    "event_id": "pm_nfl-protector-of-the-year"
+  },
+  {
+    "market_id": "0xe4d356e9f872810a523ef07996be95d2bd7081d1298d0ea5b9e5382e5b03e3cb",
+    "event_id": "pm_nfl-protector-of-the-year"
+  },
+  {
+    "market_id": "0xd315c23904e79491e11035a10dca969092bd7475eb444deaf6bf14c6a7f1d233",
+    "event_id": "pm_nfl-protector-of-the-year"
+  },
+  {
+    "market_id": "0x119d5d23b26d04b4b1ec184f93c4e1189741286a6ce87de8ca8ddcbfcb9faa68",
+    "event_id": "pm_nfl-protector-of-the-year"
+  },
+  {
+    "market_id": "0x2ffadc792cdab1b99661ae39ef434127d28aacde5f420f61fa44bc2e7c7dea47",
+    "event_id": "pm_nfl-protector-of-the-year"
+  },
+  {
+    "market_id": "0xf4ed1aaf3dbe550285a19222d99ac931ac5eb908af444a21b882a281e5dcb706",
+    "event_id": "pm_nfl-protector-of-the-year"
+  },
+  {
+    "market_id": "0xe9674aadfabfa7171bcee4e38b66f1a7d7e0af538d3718301e7b3cf111e9b5dd",
+    "event_id": "pm_will-openai-launch-a-consumer-hardware-product-by"
+  },
+  {
+    "market_id": "0x873de31db355aa49fd2d6073d8ec4eb333bddc9bca5547afa7c891fd24b8f611",
+    "event_id": "pm_next-prime-minister-of-the-netherlands"
+  },
+  {
+    "market_id": "0xff7290e188ccbc8fe771b65215237d4c33ced5a9ef819f3d574abe069ba84648",
+    "event_id": "pm_next-prime-minister-of-the-netherlands"
+  },
+  {
+    "market_id": "0x914477a1f73a2dfb37122e5fbb2117db8d9656af85f4941e036e2fc3def9ede3",
+    "event_id": "pm_next-prime-minister-of-the-netherlands"
+  },
+  {
+    "market_id": "0x674073445ab7fe8eb5a97f3624bfedc62a0482fa1fbd6e4bdfcf26060c7a23d6",
+    "event_id": "pm_next-prime-minister-of-the-netherlands"
+  },
+  {
+    "market_id": "0x320e3f08cbe47ef77c0897876a10270a472df0bcf1a32b40fd6f532cd007d2eb",
+    "event_id": "pm_next-prime-minister-of-the-netherlands"
+  },
+  {
+    "market_id": "0xb6bd48fa92be4a8bc52b307d9aa34b1fc79adbf58bc3ab1599a9aef0b4344495",
+    "event_id": "pm_next-prime-minister-of-the-netherlands"
+  },
+  {
+    "market_id": "0xaf8805982bfa850ee297c49d93f8168d1a273ca73b252f3c588ac2fba6f0ae08",
+    "event_id": "pm_next-prime-minister-of-the-netherlands"
+  },
+  {
+    "market_id": "0x830eb792fa2f2a591b5a0610a76400f80228629105f4f5896434be777665265c",
+    "event_id": "pm_next-prime-minister-of-the-netherlands"
+  },
+  {
+    "market_id": "0xc11dd6459a3a82ab0563a8fd7b76a5f2249c2607a9430ed66f8f2194c70a5982",
+    "event_id": "pm_next-prime-minister-of-the-netherlands"
+  },
+  {
+    "market_id": "0xa1e8bdd6dda71e93086ae109d8fde6fe2a44add64a30adc331f55a23f5da6942",
+    "event_id": "pm_next-prime-minister-of-the-netherlands"
+  },
+  {
+    "market_id": "0xd8c3fff562711af557abca5e7367dbb892b1d79419b039b6f185e49f21ec6f71",
+    "event_id": "pm_2026-fifa-world-cup-which-countries-qualify"
+  },
+  {
+    "market_id": "0x61eb9153c67924f13fd102a324be284f335672ea1fdb07d48af27a8cd03536be",
+    "event_id": "pm_2026-fifa-world-cup-which-countries-qualify"
+  },
+  {
+    "market_id": "0xbd9068da0f92022747bdad7a7d522c2f8bec81f0eb61c233eb94b301b3b4c62b",
+    "event_id": "pm_2026-fifa-world-cup-which-countries-qualify"
+  },
+  {
+    "market_id": "0xfef0954af0d43ea46c1ac246ac009dbcd0f76d36fd93b78d3586b23b386028ef",
+    "event_id": "pm_2026-fifa-world-cup-which-countries-qualify"
+  },
+  {
+    "market_id": "0xf7b5491e70b477d451afe7d9c1fde4bf1a927e69ff289d294b96df164f6c10f0",
+    "event_id": "pm_2026-nhl-stanley-cup-champion"
+  },
+  {
+    "market_id": "0xd01354f96db7fc2184cc34ac463a80cc65e7ff5de64c8a2f3e07e8433317d75f",
+    "event_id": "pm_2026-nhl-stanley-cup-champion"
+  },
+  {
+    "market_id": "0x4a67e1270a2ed86be8fc524b6114640e41b0c56303ecaa9584deacd62402650a",
+    "event_id": "pm_2026-nhl-stanley-cup-champion"
+  },
+  {
+    "market_id": "0x44887f53abbfe7531b1384420b185a5f10ee42a4e6c9441d5883abd4f3c1e5ef",
+    "event_id": "pm_2026-nhl-stanley-cup-champion"
+  },
+  {
+    "market_id": "0xf8f63bb47b2a7c2e0c1be3cedf4075079b11c07476d76a9469065b0c4791961a",
+    "event_id": "pm_2026-nhl-stanley-cup-champion"
+  },
+  {
+    "market_id": "0x89389a6b1439856a8d366234c795d72865c927a1aa3cf9d4cc04a3a400defde1",
+    "event_id": "pm_2026-nhl-stanley-cup-champion"
+  },
+  {
+    "market_id": "0xbdd688664b4f3cf7ec4ec011607934fe8ae720c08353fc14a6e9dfbf6bbcf11a",
+    "event_id": "pm_2026-nhl-stanley-cup-champion"
+  },
+  {
+    "market_id": "0x3b6cdd4f72cef7f29ff7e054444095564dc582266b7230be3c2b5f194d89f37d",
+    "event_id": "pm_2026-nhl-stanley-cup-champion"
+  },
+  {
+    "market_id": "0x1e03cd6255e4dec87c7c85d2267b7b4104beba48abf50e2fc15acabbf233b308",
+    "event_id": "pm_2026-nhl-stanley-cup-champion"
+  },
+  {
+    "market_id": "0xa8b42e207814d2844997523ba83e708b5bfe19cf5d2203325e4eb3ed459a9ded",
+    "event_id": "pm_2026-nhl-stanley-cup-champion"
+  },
+  {
+    "market_id": "0xc61a442adb770e35e193973c4fc1e16b219490028b792257aa5cb46619d5d977",
+    "event_id": "pm_2026-nhl-stanley-cup-champion"
+  },
+  {
+    "market_id": "0x08fa7d350c801391e7ec81d0da90f1fb05ec365f98d16d27e6d64a18d7118973",
+    "event_id": "pm_2026-nhl-stanley-cup-champion"
+  },
+  {
+    "market_id": "0xa0c492acb221e77adbe84953fec4fc917e45e8b67121c1852d20e2fb9a29064f",
+    "event_id": "pm_2026-nhl-stanley-cup-champion"
+  },
+  {
+    "market_id": "0x139b893a7ae21eaec72e887ba88910831944b4662512428c122c4ad0a5c125ac",
+    "event_id": "pm_2026-nhl-stanley-cup-champion"
+  },
+  {
+    "market_id": "0x0d082a85f48a5226b1205acdb6e95ead2fe373acabcf6c471f5895f86f42a276",
+    "event_id": "pm_2026-nhl-stanley-cup-champion"
+  },
+  {
+    "market_id": "0xfdc1041ba84bfd8f741eee0bdafce8b1887626c83afd017d18ee9b1f77008b9f",
+    "event_id": "pm_2026-nhl-stanley-cup-champion"
+  },
+  {
+    "market_id": "0x1c36595d8a1726549acca61c5eb8c9173de87c780ee1cee660ceb5b517530ab7",
+    "event_id": "pm_2026-nhl-stanley-cup-champion"
+  },
+  {
+    "market_id": "0x94123b93487bc2aa3b1b247dfd629364ff1c209bce78a5f64fbf8c1d87297c33",
+    "event_id": "pm_2026-nhl-stanley-cup-champion"
+  },
+  {
+    "market_id": "0x99d0ce2ab858154ba1ec511863dae5a9fe41731457022cf2ef8b1024cf97405a",
+    "event_id": "pm_2026-nhl-stanley-cup-champion"
+  },
+  {
+    "market_id": "0xd66cbb60c333c2eed61717370755c18bc7e494fed90cb507cd9b49c77100951d",
+    "event_id": "pm_2026-nhl-stanley-cup-champion"
+  },
+  {
+    "market_id": "0x4c317ee82d81e0a49aa9862a8c2d876fee322064acf02cd8e1346fbed36083e8",
+    "event_id": "pm_2026-nhl-stanley-cup-champion"
+  },
+  {
+    "market_id": "0x41d6f86edc88c14aa83373e72b4c26a403b159208f8973c093b928fe16d72930",
+    "event_id": "pm_2026-nhl-stanley-cup-champion"
+  },
+  {
+    "market_id": "0x54cb2293de4ce01c85b62b0c43911a36614c8558b02b70703326ca4b938a83d4",
+    "event_id": "pm_2026-nhl-stanley-cup-champion"
+  },
+  {
+    "market_id": "0x7014b40f62a559be0a0abd2bf1ca1ef16e44674b2c505bb5243c752f2e0d351f",
+    "event_id": "pm_2026-nhl-stanley-cup-champion"
+  },
+  {
+    "market_id": "0xceb5e0c99a9195da148d79693f3c6819d44d4d3d7e5be77931e174a3eebe4a85",
+    "event_id": "pm_2026-nhl-stanley-cup-champion"
+  },
+  {
+    "market_id": "0x52847ca1413b76a5570b97c0c432e38dbe61b0140f9d45e912604591b08f6fca",
+    "event_id": "pm_2026-nhl-stanley-cup-champion"
+  },
+  {
+    "market_id": "0x82d8c535c037a779ffbd2eb94704b093a5341350b49ca68128fc1c16a0901e4a",
+    "event_id": "pm_2026-nhl-stanley-cup-champion"
+  },
+  {
+    "market_id": "0xbefea6668e49e328db4d5c792bc15cea309bbc06101dfd6ced1e0556ad3ea301",
+    "event_id": "pm_2026-nhl-stanley-cup-champion"
+  },
+  {
+    "market_id": "0x9e54856d758cd7de25b75c97273a38d711642f16eacad57e61982028f2791206",
+    "event_id": "pm_2026-nhl-stanley-cup-champion"
+  },
+  {
+    "market_id": "0x48dd35aba75f4ffb52d3d19e6665925512e6462ba25232536aa1e7c5ad3dad7b",
+    "event_id": "pm_2026-nhl-stanley-cup-champion"
+  },
+  {
+    "market_id": "0x3cec1aa0f2496c59cfcd2fd1270ce798e2d7de14ea55d6fdc747cc814a4b9262",
+    "event_id": "pm_2026-nhl-stanley-cup-champion"
+  },
+  {
+    "market_id": "0x9a3436e94742acc7049aa0ff10992dc1c6a574535c3150ea157b7631cad83e2c",
+    "event_id": "pm_2026-nhl-stanley-cup-champion"
+  },
+  {
+    "market_id": "0x22e7b5e35423e76842dd3a5e1a21d13793811080d5e7b2896d0c001bd5e97d54",
+    "event_id": "pm_2026-nba-champion"
+  },
+  {
+    "market_id": "0x6b44bd667fad6cb5b3b68d8bd1055a038c77d9176dbd51f123879797cc3368a7",
+    "event_id": "pm_2026-nba-champion"
+  },
+  {
+    "market_id": "0x713641f745d71f6ec61f906237ffca3c8583f251e49384429a63ceb0ccdb2d37",
+    "event_id": "pm_2026-nba-champion"
+  },
+  {
+    "market_id": "0x649ad05a2868343271fe82ea692031d567ca1af652e3529788933157e94aa088",
+    "event_id": "pm_2026-nba-champion"
+  },
+  {
+    "market_id": "0x9b56568af78dd036b03c641e0673729d72cd7d63578eb0119cd23eb1f94f1b56",
+    "event_id": "pm_2026-nba-champion"
+  },
+  {
+    "market_id": "0xe492ad958b21201e928b6666570820a184b8f71e834910945efcfb86eecd02cd",
+    "event_id": "pm_2026-nba-champion"
+  },
+  {
+    "market_id": "0x13e1cc703a120883a709d3bb29707097952845d61ca6793ea2b4328bae2a7451",
+    "event_id": "pm_2026-nba-champion"
+  },
+  {
+    "market_id": "0x796e791e7058571e460278814fc7a3183752285338f1400087b98bef3c447908",
+    "event_id": "pm_2026-nba-champion"
+  },
+  {
+    "market_id": "0x7338d9dea0de820ed621abdff3de2d4b07a573bc0c1a6f7128941f4d0c5606e3",
+    "event_id": "pm_2026-nba-champion"
+  },
+  {
+    "market_id": "0x4e65282819c98c6aed529f357fbf5983b1ae9407a3c25bd50fe97b2906df68f9",
+    "event_id": "pm_2026-nba-champion"
+  },
+  {
+    "market_id": "0xb6b3d7a2037b3faa7e1306d741840d453432902d73cc9a146a035e40271eae73",
+    "event_id": "pm_2026-nba-champion"
+  },
+  {
+    "market_id": "0xfbf7ab9e6b6d324ffe436bab8c7a1e10aeb8200e10c1e1dbb35d2959becebc1e",
+    "event_id": "pm_2026-nba-champion"
+  },
+  {
+    "market_id": "0x543da007c2f149346cf9f9f21021f1b2e10c46c78fcd0c9297c0c21f10c94626",
+    "event_id": "pm_2026-nba-champion"
+  },
+  {
+    "market_id": "0x567f1ff714731fafa702d454a105b064a7ec4d10f6fb71ad3221f4918681c709",
+    "event_id": "pm_2026-nba-champion"
+  },
+  {
+    "market_id": "0xf523e45d6bfe49d30e45e4e7794fd6e5f621b0304e07044fef156e6dd4d4b249",
+    "event_id": "pm_2026-nba-champion"
+  },
+  {
+    "market_id": "0xe202539dfbeced92dc4112f134a205c80ca6cf4db32bd82f05b291c297219fd8",
+    "event_id": "pm_2026-nba-champion"
+  },
+  {
+    "market_id": "0x7a18c03e9dd79943a25c65a5b696378e54b5b7d236140edb5d157685ce96476a",
+    "event_id": "pm_2026-nba-champion"
+  },
+  {
+    "market_id": "0xb76183fb9e7e80c5a8f983a87ceefd35c9c177f684dd001d7387dc7b70d596d6",
+    "event_id": "pm_2026-nba-champion"
+  },
+  {
+    "market_id": "0xc094fd60c0a09ba0df48a086ef91e12390fa8777fcd9cb63c154e9622cb1d497",
+    "event_id": "pm_2026-nba-champion"
+  },
+  {
+    "market_id": "0xe709dcb12986139fa5b4cc793069d0c64bde1bfb351914c95bdd6149ec91a3ee",
+    "event_id": "pm_2026-nba-champion"
+  },
+  {
+    "market_id": "0x4405c62496c4fdd275d17ec31567a01534013c518c314ce61bb633b5e7cb6426",
+    "event_id": "pm_2026-nba-champion"
+  },
+  {
+    "market_id": "0xa49fc89bfb87bb302bfc43567709850565161bdaed5bc506bff4b85fd3c5c2ee",
+    "event_id": "pm_2026-nba-champion"
+  },
+  {
+    "market_id": "0xf374fb58698bccedf29399f9f5548a70370a11c0fece34f2570fb9b3885e8e5a",
+    "event_id": "pm_2026-nba-champion"
+  },
+  {
+    "market_id": "0x6331a779482df72d904c3c1e12b6409ff836bc06f8c97945cba9b25ada2c605c",
+    "event_id": "pm_2026-nba-champion"
+  },
+  {
+    "market_id": "0x314ec5fd53735e23cadc475161e37b1529984d97097c0fdf417941c44b6b274e",
+    "event_id": "pm_2026-nba-champion"
+  },
+  {
+    "market_id": "0xfda648d24cdad32dfe959195bd75ef4c81fbea5130eb6c7a4a0c18607a11ce63",
+    "event_id": "pm_2026-nba-champion"
+  },
+  {
+    "market_id": "0xc58cfb7397c4f3f803f5c20135cafa7f6d2c87cf3bb1e6138042b95d828e1866",
+    "event_id": "pm_2026-nba-champion"
+  },
+  {
+    "market_id": "0x298157e618b5729dafd742eec9b21e040a13da0bb09ff1fa4492360c347e3824",
+    "event_id": "pm_2026-nba-champion"
+  },
+  {
+    "market_id": "0xbc2d59e8ea0378f0851c86e84d250e80a5698874db52c13798053841f291dc28",
+    "event_id": "pm_2026-nba-champion"
+  },
+  {
+    "market_id": "0x30a8ed0d01b7e8b25334358f71d9ec71c147783c0f908c2e7c7a527905007bf8",
+    "event_id": "pm_2026-nba-champion"
+  },
+  {
+    "market_id": "0xef6da27c9c02f182d20706bb4efbcd9f7456e1263aef7e24fd6f6ad01346db9b",
+    "event_id": "pm_who-will-perform-at-super-bowl-halftime-show"
+  },
+  {
+    "market_id": "0x7b11f426ea2f966b193d4a30bca3b9a7a94e1972dbf3fe095d41d21a4793029a",
+    "event_id": "pm_who-will-perform-at-super-bowl-halftime-show"
+  },
+  {
+    "market_id": "0x41c04bd7a44d780c84654c353620d26413f744310d597b9efced8e86ae162546",
+    "event_id": "pm_who-will-perform-at-super-bowl-halftime-show"
+  },
+  {
+    "market_id": "0x81248174c48f0dac4e0097f5cef94cac2de0363e5b79842b231e6446f6235e37",
+    "event_id": "pm_who-will-perform-at-super-bowl-halftime-show"
+  },
+  {
+    "market_id": "0x1e43bbcbd80c64de54d8c8b07f25df138ecb8e5310d0ef683f4dd6acdbe3c15c",
+    "event_id": "pm_who-will-perform-at-super-bowl-halftime-show"
+  },
+  {
+    "market_id": "0x734a3b6a8320681fb0f99d4fcb10ecd2ee13d75baf85b25f51269ce8f15a3db1",
+    "event_id": "pm_who-will-perform-at-super-bowl-halftime-show"
+  },
+  {
+    "market_id": "0xb963dce61782973feca149a0dee262da007e29786637961ae40741e49ad940e5",
+    "event_id": "pm_who-will-perform-at-super-bowl-halftime-show"
+  },
+  {
+    "market_id": "0xd88e2a940a7c5753b54a53d8ab13907c9e7dfcb18e57d196f2e18c98e2a566d3",
+    "event_id": "pm_who-will-perform-at-super-bowl-halftime-show"
+  },
+  {
+    "market_id": "0x32f74ec11863074832cc396e216ced7c7f488d4c935b1e92f63f80ba1b69ffeb",
+    "event_id": "pm_who-will-perform-at-super-bowl-halftime-show"
+  },
+  {
+    "market_id": "0x4c46e81eda266043255231cb03cd26486789816d1b6401e5504d7aa2dd54ab71",
+    "event_id": "pm_who-will-perform-at-super-bowl-halftime-show"
+  },
+  {
+    "market_id": "0x11ccb8adad20a3a3bd990adb69c67788d7a05a32ff873d11db8ca9d64be7ed40",
+    "event_id": "pm_who-will-perform-at-super-bowl-halftime-show"
+  },
+  {
+    "market_id": "0xe67c752a7714e539ae0df1da39473d0d254372d4e117bfd6f08f1c395ff1a04c",
+    "event_id": "pm_who-will-perform-at-super-bowl-halftime-show"
+  },
+  {
+    "market_id": "0x891d4a752d5e8e7a7d707b6f40141975f1e469616c4ff74f8cf02869a0159cfa",
+    "event_id": "pm_who-will-perform-at-super-bowl-halftime-show"
+  },
+  {
+    "market_id": "0x3ddf3c3d3c44130aa7cc17ad34347574c8802469c1881462aa0fea68a2f5b8ec",
+    "event_id": "pm_who-will-perform-at-super-bowl-halftime-show"
+  },
+  {
+    "market_id": "0x80a4eaef6cbf3a5f272fec1ceec7f97bd9e6e013f11ce842a2f1025d5eac6113",
+    "event_id": "pm_who-will-perform-at-super-bowl-halftime-show"
+  },
+  {
+    "market_id": "0x0bf9d93712b33bdc690d33ae003b2e0084e177e311d03f6fa105942406cc6dc5",
+    "event_id": "pm_who-will-perform-at-super-bowl-halftime-show"
+  },
+  {
+    "market_id": "0x2315258aeb252304a35b55bcd03ac01960719baac9ff3170a71436554d7b54d1",
+    "event_id": "pm_who-will-perform-at-super-bowl-halftime-show"
+  },
+  {
+    "market_id": "0xe8fb52f2820d0f886aa55d49beeadae3087a27c1d6d56499da91a0afb8c1008b",
+    "event_id": "pm_who-will-perform-at-super-bowl-halftime-show"
+  },
+  {
+    "market_id": "0x2f10c3028e5dbb337da539a98ba71a083bcc2e0827e87f35ad8afe109d037646",
+    "event_id": "pm_who-will-perform-at-super-bowl-halftime-show"
+  },
+  {
+    "market_id": "0xa4d169eea50b33fc78ab903e514bc1bd12f319734bd41fdeab990e97eb7bb7fb",
+    "event_id": "pm_who-will-perform-at-super-bowl-halftime-show"
+  },
+  {
+    "market_id": "0x4c80fdfe398d1f95c171891ddc0b7ec794fad672774e81dd3c1d55fce4126112",
+    "event_id": "pm_who-will-perform-at-super-bowl-halftime-show"
+  },
+  {
+    "market_id": "0xbdc37df361983281e28e58f54ff8fedaead95bd23691a7241a70e504505f4301",
+    "event_id": "pm_who-will-perform-at-super-bowl-halftime-show"
+  },
+  {
+    "market_id": "0x9b6b86ab438a8431ddae66e2407752725566d4cdffd45cfcf37bbf9ce2a1a326",
+    "event_id": "pm_who-will-perform-at-super-bowl-halftime-show"
+  },
+  {
+    "market_id": "0xa65063a44e807994ddd2a7a4ebb2a3c0f5651fb05a0e7797a41ff3be9a27c067",
+    "event_id": "pm_who-will-perform-at-super-bowl-halftime-show"
+  },
+  {
+    "market_id": "0xc1c30b0e1cf8c2f8f0fee82720fd2d69dc0a2658a668c7c9cb3e7393484ff81c",
+    "event_id": "pm_who-will-perform-at-super-bowl-halftime-show"
+  },
+  {
+    "market_id": "0x70eecc78ae7995dd87d05417bd23842c791a773ce473873a1a2fb66a53c6c82d",
+    "event_id": "pm_who-will-perform-at-super-bowl-halftime-show"
+  },
+  {
+    "market_id": "0x56293944550a4969992c344bc04c539233a18d3a25546204d814a85cf22c9982",
+    "event_id": "pm_who-will-perform-at-super-bowl-halftime-show"
+  },
+  {
+    "market_id": "0xd6afe7937f8d061eedd052bf368b8a05ddcd8c3a9166864dac08a80c77a28599",
+    "event_id": "pm_who-will-perform-at-super-bowl-halftime-show"
+  },
+  {
+    "market_id": "0x124e34de4c0dcc3d707756fea38b2c1e47e6095e6835741b34df23a14cdeb25d",
+    "event_id": "pm_who-will-perform-at-super-bowl-halftime-show"
+  },
+  {
+    "market_id": "0x8c3a22c300f8e415ed986eba5581c3766f8fbe70e0844e48534cdc030f3e936b",
+    "event_id": "pm_who-will-perform-at-super-bowl-halftime-show"
+  },
+  {
+    "market_id": "0xf4c6a51be135a2b13ee728f2cd30f549d5cd4ee0180c47fe87f854e8324149a9",
+    "event_id": "pm_who-will-perform-at-super-bowl-halftime-show"
+  },
+  {
+    "market_id": "0x26a7419d980518dfa1036803330e175449e8a445f708ebea1cd3a9c8f8a2db1f",
+    "event_id": "pm_who-will-perform-at-super-bowl-halftime-show"
+  },
+  {
+    "market_id": "0xfc6260666d020a912a87d9000eff5116d2adfb8c30aba543427a4c1f1411f1a0",
+    "event_id": "pm_megaeth-market-cap-fdv-one-day-after-launch"
+  },
+  {
+    "market_id": "0xdb68062324c27327e9cd4b21b1dd0deadbc4b860abb8c076b9ba3ed4652ced13",
+    "event_id": "pm_megaeth-market-cap-fdv-one-day-after-launch"
+  },
+  {
+    "market_id": "0xe459d1b598da754c9fd5fc155b6efe3a144aa80abbc7d041fce7d35d903d3c8e",
+    "event_id": "pm_megaeth-airdrop-by"
+  },
+  {
+    "market_id": "0x8d03b98121d745c752a41ad406e52b73643403aa6456a3806d94bf7a2fa52fdf",
+    "event_id": "pm_who-will-perform-at-super-bowl-halftime-show"
+  },
+  {
+    "market_id": "0xa467b14d51f01b957109d9cbb1d6c124fab2a089d52ed8f471d23c2812e743b7",
+    "event_id": "pm_xi-jinping-out"
+  },
+  {
+    "market_id": "0x0f49db97f71c68b1e42a6d16e3de93d85dbf7d4148e3f018eb79e88554be9f75",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0xe6bcc2f1dd025ce5e1833190f7c60a71171c94f805df55b9ab0ded695ec93565",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x4c325469d9b516ef4e6b8f73a81a12607dec075e3c2fd454f91765aaeafc4760",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0xd65891729ce093cc12236856837eba1a0872fc7998fd4294c21346f7db68079c",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x61d9486c0f7e14ed98f3b177b6adcb3cd45646c92e8bbfbf209789b86472d4b6",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0xc8f1cf5d4f26e0fd9c8fe89f2a7b3263b902cf14fde7bfccef525753bb492e47",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x909659c9436228e2be56d5582ba6188166f2f8bf3c596335512c8f2e380d01ec",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0xe39adea057926dc197fe30a441f57a340b2a232d5a687010f78bba9b6e02620f",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x1d519b87999e3d4e90e1e8f57b5eee73a0ba488ff3fdb70867f294733aba84a9",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x74dba1ce1ae9dd535414e85f2d9ab5ea32c0fb1acc9b7130b67e6d91217e24e1",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x9d4f94f82de9d13ff1d3318639ab9000ee2533949e525343156f374fb00bd9b1",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0xe883f2fda25a605a184bb5fe583afce6cc21ea0b348b6a3728ec3067553c548d",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0xdce84960dce38aa4a5800a5eba7c9ac34d2ce49ba9d44c42572c472d468af264",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x1970bcce75e3674660917ae4685b433a9b1e0152d810a8d7c346dfd5e00694c2",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x3265b10daeb30dbcc3214bd02e488551d0a5d3028392f4152e4750b943fbfc91",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x3e218c99a1335641b3a5ee6c887521d19b0c28fddd6b99c254a07968e35c0b1b",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x36db77c539bcc8c7bf0686c1b99f30c5a5eed1f53d3b3a27a071550c81f83701",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x3dc47a72ac6bb265e9cefebd2a2eeed00966394cb2d07245b5c94138b60e82a3",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0xcb239105ed21a2420ba4d85090b9bc32755c56601ffdc528afd17fd6282fe930",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x3535fb2f4aef6619dde8b367cb5e5d209526bb496d5d9778428c58a0252435e3",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x939eeb2dea216749bd409bedde483c3f2bfb0e24d4f2d34461c0b21c6e91f010",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0xca1d1139b0c3a29983407f499476ae642482788e841a277eb86faeeb9fa4a85c",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x8fbcb151e2c988df5a43abb02298014b7daf34c008f3eed9188dd16a2a19bec1",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0xfee07be730188c94cd3644ed6f107fa3ea2dfab9989ce8d39aeeae064766abe3",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x88d67705780a3d922317ecb0c78a947a306174d0510df2ae89394d5abfb28206",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x663b88d3a8f2341bb8d878709dc78632bcaf7512e577bd15521e5d8ed933efbc",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x46dbd48d6bde5b81edb480e0f676a2cdda6c6b592c4d86a9367c7ad5a9870195",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x30cfb887558b20373a984da60c372fe5a90c0296aa6d8bb413a8aa7543846da2",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x29283b56d3eec6d1d89fff51793d9d2e01579d2379b1d3e9ebda175d3561e809",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x8b203037c7c0e21b500314f8398d2a8ea294b7ce1f4f9185f426425a3505bc45",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x1945a8b23e313ed7423b6b6fd556f9ab5578900376b565a61dc480a5f4f35d21",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x822e61527476cabf98927e3aad385c5ecdae7086f945535f2c1fd9ae8dbfa46e",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0xf2e51acfbb6d0414dc2ace81b7dc2af7c165e443dcb91f6caa7aab6d6ab4f06d",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0xc44edcfdedb422bae8ff1803e2178d1ee025fc41efd81400ccbede709e018841",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x8dbf6b51f302fd401065706245c144e93fe209abce183199433d4484b3ed8aff",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0xe06a7e94cf2fa8dc2085b7610fe16e9be1cde6654f34d365c13da1149b276c61",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x450810ae738a0ff820d3248f2b24937f63fb8c8cf422ed2a915125adb4d9d3c8",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x8ecd1d15e521b7d1020ad5596cc981c8764e9dcfbc3648f582e1a5138aee7185",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x0f8ef3cc906ba7ba94a44724738df44bdd5f73e59e40c9c8b4ff8569e349643c",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0xc720fcfa9e29346a976902f87e0f0f3bdc31d43af501b4fdef4f1780a30dd359",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x3cd6e52603d80ddbbdac9b1a4d43f9b7faa6aae4fae4d0fdfad3bd58454da7d3",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x98933c78b5e277b62d91a6c174b412218de000b54c4c67ec8673bf561cec6e81",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x20d0bc282552ac5ec6f61cd7101cb42a5948cae07e7651bdf40ede1a8b2c5eac",
+    "event_id": "pm_democratic-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x6bd56627aa21311850825edb27e53434a0e17a4f782be0086bc07f71eee00d0d",
+    "event_id": "pm_putin-out-as-president"
+  },
+  {
+    "market_id": "0x7ad403c3508f8e3912940fd1a913f227591145ca0614074208e0b962d5fcc422",
+    "event_id": "pm_presidential-election-winner-2028"
+  },
+  {
+    "market_id": "0x4567b275e6b667a6217f5cb4f06a797d3a1eaf1d0281fb5bc8c75e2046ae7e57",
+    "event_id": "pm_presidential-election-winner-2028"
+  },
+  {
+    "market_id": "0xf232b565995e4b3a3e7fa6cef775eeff1cecd20ad7c013cb9fc8dadabfe279a9",
+    "event_id": "pm_presidential-election-winner-2028"
+  },
+  {
+    "market_id": "0x2c03c41e5032364cb7166e842bdd22913f28aa2c837d8432704aa89c338875c8",
+    "event_id": "pm_presidential-election-winner-2028"
+  },
+  {
+    "market_id": "0x5969cbb46aca5319b19e19a3c6f63de098950b675bf268f30f4d035508da1957",
+    "event_id": "pm_presidential-election-winner-2028"
+  },
+  {
+    "market_id": "0x2053d8515f1b8cbeea4ccdb56e60e89c2617e43a8660d95166b8e71d27865277",
+    "event_id": "pm_presidential-election-winner-2028"
+  },
+  {
+    "market_id": "0xe29b33ef5bf351c8a22bfd79f8b58e62649d54ceee6f9735387cef79f52fecae",
+    "event_id": "pm_presidential-election-winner-2028"
+  },
+  {
+    "market_id": "0xfd6176f8c9a59105f80e060a77c4099881c5f2d9e0ceab88e55cf978462fab7f",
+    "event_id": "pm_presidential-election-winner-2028"
+  },
+  {
+    "market_id": "0x09ad4955c170d46c6d80b5f554435b19e229ff7dbe55370892b64782336cc3b9",
+    "event_id": "pm_presidential-election-winner-2028"
+  },
+  {
+    "market_id": "0xc4435df23facee8c4cd86090310c7835c2a0425646b2588b0a02e67fa42f444e",
+    "event_id": "pm_presidential-election-winner-2028"
+  },
+  {
+    "market_id": "0xb3298af85e00aafad937c119444a5f2800a55343b7482eb75581f6e454432501",
+    "event_id": "pm_presidential-election-winner-2028"
+  },
+  {
+    "market_id": "0x66b906b8205f48a26beb8e553bbb1e7954e87e4f6e1d539823441221d1806e8f",
+    "event_id": "pm_presidential-election-winner-2028"
+  },
+  {
+    "market_id": "0xefe6300fd8a053cca53df8f1bd536c5f571a136392c0516e7b16e39f1addecb0",
+    "event_id": "pm_presidential-election-winner-2028"
+  },
+  {
+    "market_id": "0x8fc141205ebce5adf437bfdf4d0c5ff58ff24293b79c9431991346c208bb48ed",
+    "event_id": "pm_presidential-election-winner-2028"
+  },
+  {
+    "market_id": "0xce9a5fa30fe74e323b4a8f15afbb0b7a41a537aa880779ddf7dee22223b2f34a",
+    "event_id": "pm_presidential-election-winner-2028"
+  },
+  {
+    "market_id": "0x23481b811978194fa175143ed7cd8d0000878ca59c408fd552e33535f7aa771e",
+    "event_id": "pm_presidential-election-winner-2028"
+  },
+  {
+    "market_id": "0xe0173375b7eaccb836f7b92d28a9a2d1cc69e54e5a65fae89a5d7e49aadd332e",
+    "event_id": "pm_presidential-election-winner-2028"
+  },
+  {
+    "market_id": "0x3367d22cd2a673014f1960742afdf8601040a8ad856dc0a98bd1a44ee99504e2",
+    "event_id": "pm_presidential-election-winner-2028"
+  },
+  {
+    "market_id": "0xae70ab9bf1c3726fe430a2ba8b517697ae24e0f0ab554b876a5b521153068882",
+    "event_id": "pm_presidential-election-winner-2028"
+  },
+  {
+    "market_id": "0x64396449b471b10b006285fa49dd9a5df535694de7b4c703fdeb0d88d5c4cd33",
+    "event_id": "pm_presidential-election-winner-2028"
+  },
+  {
+    "market_id": "0x01dffa7abae7e5d9b7fb44b06d537c5ac932e2ca422ab4b53366672f5e2dc7d6",
+    "event_id": "pm_presidential-election-winner-2028"
+  },
+  {
+    "market_id": "0x68e3c4e0dd8f82d010060032006fd157401b0bd8e04bd2953ae293e31eb99bf6",
+    "event_id": "pm_presidential-election-winner-2028"
+  },
+  {
+    "market_id": "0x836b850fc838195374862551a36f1c8691d96ff01e58b0a071f0fc1a0e357fb1",
+    "event_id": "pm_presidential-election-winner-2028"
+  },
+  {
+    "market_id": "0xe2bdf6c18c8ab5ad5d3be5f95dd749e88d1dee7ac7c4dbf5101013a5c055e3df",
+    "event_id": "pm_presidential-election-winner-2028"
+  },
+  {
+    "market_id": "0xd94b47bdeba16ae948bfb147bda059f3543d6fca73291644dfff5268bba7a797",
+    "event_id": "pm_presidential-election-winner-2028"
+  },
+  {
+    "market_id": "0x7f695758278e6d4d9e63df862afa88d664d3402a3d26e4d32ae05121cdbddba6",
+    "event_id": "pm_presidential-election-winner-2028"
+  },
+  {
+    "market_id": "0xc586d15be76278848a26c761c2fcf70f8cebca71815cfab83e656ff5c6ec13a9",
+    "event_id": "pm_presidential-election-winner-2028"
+  },
+  {
+    "market_id": "0xf05b4b55336a4c1c7b44c726911d2b559732cff7bad339084de86ae364dc85f6",
+    "event_id": "pm_presidential-election-winner-2028"
+  },
+  {
+    "market_id": "0xbbbece074c2d4010e39e39c85ed67b1131180fcea616073c893fb6beaf51d783",
+    "event_id": "pm_presidential-election-winner-2028"
+  },
+  {
+    "market_id": "0xa9549c44687993a9a154347c6907092341459b927efaa3f2b49009ca2c4e40a1",
+    "event_id": "pm_presidential-election-winner-2028"
+  },
+  {
+    "market_id": "0x1d54eb5eac2cee8f595f3097c65da7d07f8ab5dee63d7c0c6883eb70e1e9af30",
+    "event_id": "pm_russia-x-ukraine-ceasefire"
+  },
+  {
+    "market_id": "0x895e01dbf3e6a33cd9a44ca0f8cdb5df1bd2b0b6ebed5300d28f8da7145145e4",
+    "event_id": "pm_republican-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x18b1c135d0a40c5894da9412e77311827d9caf16cf4cd6591b247a34730af919",
+    "event_id": "pm_republican-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x21ad31a46bfaa51650766eff6dc69c866959e32d965ffb116020e37694b6317d",
+    "event_id": "pm_republican-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x9cd77217b2ab264fe4f6d302f662c0a91f349fe5798f1f98d70bb2311712791b",
+    "event_id": "pm_republican-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0xd0c4c60c8e68ee15974df3aa7d217225e98020fab9fcdb32d10f8e3d285e1619",
+    "event_id": "pm_republican-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x4a9d58d4da874e26708f5bdb014eb07a06aeebb927068d169d43831595386557",
+    "event_id": "pm_republican-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x64d31a2af85518c6718a5757a35b840f08eca20c1e22c0eb1e96ec01cc55b8b6",
+    "event_id": "pm_republican-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0xd7a0d72b19ca48b06b0029684677f581e32f133c367d7a19c2f1e4ad07066af7",
+    "event_id": "pm_republican-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0xd997dc2a212a7d6673375a3b016db1fb214247142f8cde0cbf07f8e6d789877c",
+    "event_id": "pm_republican-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x00ad3bb5284b0b2314b1a2d42812fe292f606619c6278bd95c9d905816c240f6",
+    "event_id": "pm_republican-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x214093035e429b91df322bd20c55d9f611f741f67472a63f7623a9afc0cffa57",
+    "event_id": "pm_republican-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0xc510176cf39d73295354fc797d84b510d050b45d29d6c9735ee18cdbc4fd6463",
+    "event_id": "pm_republican-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x42631e1a8c8e6389422b58b8e15b1b551892b9833651aa3bab25afab124354b5",
+    "event_id": "pm_republican-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0xd1747284d6048b2a3dcfbee489db405f36de18f9590197dd0e5c9f0c246bf050",
+    "event_id": "pm_republican-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x655b4bfdfa55a95c24d6e9bf7e7cd62f1b57da9a1f4c7f40f090b8ba847dffa2",
+    "event_id": "pm_republican-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x4d4bceee5f59f75230c6438f69fc913a6da7afa4098ce0734655045c02a730fc",
+    "event_id": "pm_republican-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x0ac23db1e56971022bc7e822b907a2466c618b34104ea72bc9fa95e41c86a9c6",
+    "event_id": "pm_republican-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0xfbb80ea5f8fc02ee7df8bd4f58790e1d04b874078a49a7b7028a74a2075100c9",
+    "event_id": "pm_republican-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0xf2cea45ec282af4f302d2ab85ede73678cd692ebf8c3ab6d52bfa5e19f44c553",
+    "event_id": "pm_republican-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x61a1278884fa70d68d4bcaaf72fad55bbdb063cac28c6947472ca91635fab10f",
+    "event_id": "pm_republican-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x7190eccbd0677d5d0ae8cdf598b37e945a346915c666dda11468dc9970657a56",
+    "event_id": "pm_republican-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x5f1b1caf70eb994bfff2986727a05a3ac9f7ec8b0da4017f7732596d023e5a07",
+    "event_id": "pm_republican-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x41c6341dd79903aca4bb0c29f5a7976946c3774d2fd72f38cbb7de7092144520",
+    "event_id": "pm_republican-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x4273517fc8141d57ad1528ede46efdceebdb6a4da746d5de5bad216564209a1e",
+    "event_id": "pm_republican-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x4f02b9cf70e514964fcb9aa2f7873d2b0d1aa0986da096cce7e6687e78da00f3",
+    "event_id": "pm_republican-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0xf8dbde8b6e038775a673947e59da2de15a2127272b50b9877400fdbf7cfc3026",
+    "event_id": "pm_republican-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0xd10bc768ede58b53ed400594240b0a0603134a32dab89ec823a18759cbc180ca",
+    "event_id": "pm_republican-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0xd5659eea81cada0bac656f5a9099861786cbae6755e2e1ac2c9e9441908b551f",
+    "event_id": "pm_republican-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x7abed80b88301210ee83b7b14ec41bc9a5161e1af07254fbb26c6e2bf7182766",
+    "event_id": "pm_republican-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x414378275cb214b747245942be889ee1e077c56d1c00eb4d726629c95f22b5a5",
+    "event_id": "pm_republican-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x17902b9490c6a73152772316b4705935c5c6801ba269f2afc81686532e34fb9a",
+    "event_id": "pm_republican-presidential-nominee-2028"
+  },
+  {
+    "market_id": "0x99a0fdc1bb6308873bf87eb75a47e21c8340fe20fb6b033444c1d21392da10a9",
+    "event_id": "pm_texas-senate-primary-deriv"
+  },
+  {
+    "market_id": "0x781a06aa5779f97724b75ed8128aaf72c4a8955c893a6fefdc0efd7cb001c513",
+    "event_id": "pm_texas-senate-primary-deriv"
+  },
+  {
+    "market_id": "0x8de68dfbcfa9e9b6472bceec9aea2f252038cc12df9838b1f0016c02ec94b6d7",
+    "event_id": "pm_texas-senate-primary-deriv"
+  },
+  {
+    "market_id": "0x1a22c136f277a62d27c22521a1ec1363d2edb5c657f129e509e77958dc1846d2",
+    "event_id": "pm_texas-senate-primary-deriv"
+  },
+  {
+    "market_id": "0xb99ef516a29277c886f65d979143c0cad5eb80b937bf6039b9832eff7389a743",
+    "event_id": "pm_texas-senate-primary-deriv"
+  },
+  {
+    "market_id": "0x307a1ed89d60b61002dd5bbf00e1408c5ed2ab3fcdb056191ca7ef9bc34d38f3",
+    "event_id": "pm_senate-deriv"
+  },
+  {
+    "market_id": "0x86bfb53af7250a40928975c551d12c185b762fa4ce0b40c6a64a50c946d72587",
+    "event_id": "pm_senate-deriv"
+  },
+  {
+    "market_id": "0xd5d9fc47718bd553592d126b1fa5e87183d27f3936975b0c04cc0f2dec1f1bb4",
+    "event_id": "pm_house-odds-deriv"
+  },
+  {
+    "market_id": "0x4e4f77e7dbf4cab666e9a1943674d7ae66348e862df03ea6f44b11eb95731928",
+    "event_id": "pm_house-odds-deriv"
+  },
+  {
+    "market_id": "0x16c63b7cc37f012b9f59ee164ec03877914c701d06d48291ae8d6fc08a088b0d",
+    "event_id": "pm_balance-of-power-2026-midterms"
+  },
+  {
+    "market_id": "0x0808de4f0cfd47947f2d1be51f9a9c52ea0fec76f73a75cfbe79ddec98d8a908",
+    "event_id": "pm_balance-of-power-2026-midterms"
+  },
+  {
+    "market_id": "0x998bc71817b2d76921d1999ce0f3431cfd5945583667a371280ca2b430b0c06e",
+    "event_id": "pm_balance-of-power-2026-midterms"
+  },
+  {
+    "market_id": "0xc5eae79d1ffe716572353962eb926b1e3964c500a4880a7a94f58408218ee76b",
+    "event_id": "pm_balance-of-power-2026-midterms"
+  },
+  {
+    "market_id": "0x7987a821b8032824f1805ee39eb5dfb8f64603e4e9e673259eb76f82b439fd3d",
+    "event_id": "pm_balance-of-power-2026-midterms"
+  }
+]

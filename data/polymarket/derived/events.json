@@ -1,0 +1,331 @@
+[
+  {
+    "endDate": "2026-02-28T12:00:00Z",
+    "event_id": "pm_will-tariffs-generate--250b-in-2025",
+    "markets_count": 1,
+    "startDate": "2025-04-15T22:17:42.099593Z",
+    "title": "Will tariffs generate >$250b in 2025?"
+  },
+  {
+    "endDate": "2025-12-31T12:00:00Z",
+    "event_id": "pm_deportation-count",
+    "markets_count": 9,
+    "startDate": "2025-01-05T18:49:12.543209Z",
+    "title": "Will Trump deport less than 250,000?"
+  },
+  {
+    "endDate": "2026-02-09T12:00:00Z",
+    "event_id": "pm_nfl-protector-of-the-year",
+    "markets_count": 23,
+    "startDate": "2025-05-22T19:09:17.658246Z",
+    "title": "Will Tristan Wirfs win the NFL Protector of the Year? "
+  },
+  {
+    "endDate": "2026-12-31T00:00:00Z",
+    "event_id": "pm_next-prime-minister-of-the-netherlands",
+    "markets_count": 10,
+    "startDate": "2025-07-07T19:24:51.169921Z",
+    "title": "Will Dilan Yeşilgöz-Zegerius become the next Prime Minister of the Netherlands?"
+  },
+  {
+    "endDate": "2025-12-31T12:00:00Z",
+    "event_id": "pm_will-trump-deport-750-000-or-more-people-in-2025",
+    "markets_count": 1,
+    "startDate": "2025-01-05T18:48:32.266639Z",
+    "title": "Will Trump deport 750,000 or more people in 2025?"
+  },
+  {
+    "endDate": "2026-02-28T12:00:00Z",
+    "event_id": "pm_will-elon-cut-the-budget-by-at-least-5-in-2025",
+    "markets_count": 1,
+    "startDate": "2025-02-05T23:15:54.926Z",
+    "title": "Will Elon cut the budget by at least 5% in 2025?"
+  },
+  {
+    "endDate": "2026-07-20T00:00:00Z",
+    "event_id": "pm_2026-fifa-world-cup-winner",
+    "markets_count": 42,
+    "startDate": "2025-07-02T22:26:48.104Z",
+    "title": "Will Spain win the 2026 FIFA World Cup?"
+  },
+  {
+    "endDate": "2026-02-08T12:00:00Z",
+    "event_id": "pm_super-bowl-champion-2026",
+    "markets_count": 4,
+    "startDate": "2025-05-01T17:45:53.528Z",
+    "title": "Will the Denver Broncos win Super Bowl 2026?"
+  },
+  {
+    "endDate": "2026-03-31T00:00:00Z",
+    "event_id": "pm_russia-x-ukraine-ceasefire",
+    "markets_count": 1,
+    "startDate": "2025-07-10T16:45:49.35Z",
+    "title": "Russia x Ukraine ceasefire by March 31, 2026?"
+  },
+  {
+    "endDate": "2028-11-07T00:00:00Z",
+    "event_id": "pm_presidential-election-winner-2028",
+    "markets_count": 30,
+    "startDate": "2025-07-11T19:05:46.369Z",
+    "title": "Will JD Vance win the 2028 US Presidential Election?"
+  },
+  {
+    "endDate": "2025-12-31T00:00:00Z",
+    "event_id": "pm_megaeth-market-cap-fdv-one-day-after-launch",
+    "markets_count": 2,
+    "startDate": "2025-06-26T19:48:44.456Z",
+    "title": "MegaETH market cap (FDV) >$2B one day after launch?"
+  },
+  {
+    "endDate": "2026-03-03T00:00:00Z",
+    "event_id": "pm_texas-senate-primary-deriv",
+    "markets_count": 5,
+    "startDate": "2025-07-10T21:31:46.099Z",
+    "title": "Will Ken Paxton win the 2026 Texas Republican Primary?"
+  },
+  {
+    "endDate": null,
+    "event_id": "pm_will-openai-launch-a-consumer-hardware-product-by",
+    "markets_count": 1,
+    "startDate": "2025-05-22T14:50:07.243348Z",
+    "title": "Will OpenAI launch a new consumer hardware product by March 31, 2026?"
+  },
+  {
+    "endDate": "2026-02-28T12:00:00Z",
+    "event_id": "pm_how-much-revenue-will-the-u-s-raise-from-tariffs-in-2025",
+    "markets_count": 6,
+    "startDate": "2025-04-15T22:23:02.177852Z",
+    "title": "Will the U.S. collect less than $100b in revenue in 2025?"
+  },
+  {
+    "endDate": "2026-02-11T12:00:00Z",
+    "event_id": "pm_nfl-coach-of-the-year",
+    "markets_count": 32,
+    "startDate": "2025-05-07T23:01:08.156095Z",
+    "title": "Will Ben Johnson win NFL Coach of the Year?"
+  },
+  {
+    "endDate": "2026-11-03T00:00:00Z",
+    "event_id": "pm_senate-deriv",
+    "markets_count": 2,
+    "startDate": "2025-07-11T19:48:59.128Z",
+    "title": "Will the Democratic Party control the Senate after the 2026 Midterm elections?"
+  },
+  {
+    "endDate": "2026-05-18T00:00:00Z",
+    "event_id": "pm_nba-rookie-of-the-year",
+    "markets_count": 13,
+    "startDate": "2025-07-09T20:40:54.921Z",
+    "title": "Will Cooper Flagg win the 2025–26 NBA Rookie of the Year award?"
+  },
+  {
+    "endDate": "2026-07-31T00:00:00Z",
+    "event_id": "pm_scotus-accepts-sports-event-contract-case-by",
+    "markets_count": 1,
+    "startDate": "2025-07-16T19:37:42.408Z",
+    "title": "SCOTUS accepts sports event contract case by July 31, 2026?     "
+  },
+  {
+    "endDate": "2025-12-31T12:00:00Z",
+    "event_id": "pm_senator-eichorn-guilty-of-soliciting-a-child",
+    "markets_count": 1,
+    "startDate": "2025-03-18T20:19:36.474167Z",
+    "title": "Senator Eichorn guilty of soliciting a child?"
+  },
+  {
+    "endDate": "2025-12-31T12:00:00Z",
+    "event_id": "pm_brazil-unemployment-below-6-3-for-q4-2025",
+    "markets_count": 1,
+    "startDate": "2025-03-18T17:12:05.8599Z",
+    "title": "Brazil unemployment below 6.3% for Q4 2025?"
+  },
+  {
+    "endDate": "2026-01-26T12:00:00Z",
+    "event_id": "pm_nfc-champion",
+    "markets_count": 2,
+    "startDate": "2025-05-01T17:26:08.913Z",
+    "title": "Will the Rams win the NFC Championship?"
+  },
+  {
+    "endDate": "2026-02-07T12:00:00Z",
+    "event_id": "pm_nfl-defensive-rookie-of-the-year",
+    "markets_count": 17,
+    "startDate": "2025-05-06T19:54:08.374781Z",
+    "title": "Will Abdul Carter be the 2025-2026 NFL Defensive Rookie of the Year?"
+  },
+  {
+    "endDate": "2025-12-31T12:00:00Z",
+    "event_id": "pm_harvey-weinstein-prison-time",
+    "markets_count": 6,
+    "startDate": "2025-05-12T22:50:41.123Z",
+    "title": "Will Harvey Weinstein be sentenced to no prison time?"
+  },
+  {
+    "endDate": "2026-06-30T00:00:00Z",
+    "event_id": "pm_2026-nhl-stanley-cup-champion",
+    "markets_count": 32,
+    "startDate": "2025-06-23T16:00:27.271901Z",
+    "title": "Will the Carolina Hurricanes win the 2026 NHL Stanley Cup?"
+  },
+  {
+    "endDate": "2026-12-31T00:00:00Z",
+    "event_id": "pm_xi-jinping-out",
+    "markets_count": 1,
+    "startDate": "2025-07-03T20:37:00.228Z",
+    "title": "Xi Jinping out before 2027?"
+  },
+  {
+    "endDate": "2026-04-12T00:00:00Z",
+    "event_id": "pm_2026-fifa-world-cup-which-countries-qualify",
+    "markets_count": 4,
+    "startDate": "2025-06-09T12:21:53.041794Z",
+    "title": "Will Italy qualify for the 2026 FIFA World Cup?"
+  },
+  {
+    "endDate": "2026-06-10T00:00:00Z",
+    "event_id": "pm_nba-mvp",
+    "markets_count": 22,
+    "startDate": "2025-07-17T12:14:01.096386Z",
+    "title": "Will Nikola Jokic win the 2025–2026 NBA MVP?"
+  },
+  {
+    "endDate": "2026-02-28T12:00:00Z",
+    "event_id": "pm_will-gta-6-cost-100",
+    "markets_count": 1,
+    "startDate": "2025-03-06T20:51:01.626726Z",
+    "title": "Will GTA 6 cost $100+?"
+  },
+  {
+    "endDate": "2026-07-31T12:00:00Z",
+    "event_id": "pm_what-will-happen-before-gta-vi",
+    "markets_count": 7,
+    "startDate": "2025-05-02T15:48:00.174Z",
+    "title": "Russia-Ukraine Ceasefire before GTA VI?"
+  },
+  {
+    "endDate": "2026-02-07T12:00:00Z",
+    "event_id": "pm_nfl-offensive-rookie-of-the-year",
+    "markets_count": 27,
+    "startDate": "2025-05-06T21:46:27.029611Z",
+    "title": "Will Ashton Jeanty be the 2025-2026 NFL Offensive Rookie of the Year?"
+  },
+  {
+    "endDate": "2026-02-28T12:00:00Z",
+    "event_id": "pm_will-elon-cut-the-budget-by-at-least-10-in-2025",
+    "markets_count": 1,
+    "startDate": "2025-02-05T23:04:53.919Z",
+    "title": "Will Elon cut the budget by at least 10% in 2025?"
+  },
+  {
+    "endDate": "2026-01-30T12:00:00Z",
+    "event_id": "pm_negative-gdp-growth-in-2025",
+    "markets_count": 1,
+    "startDate": "2025-04-03T20:55:39.279Z",
+    "title": "Negative GDP growth in 2025?"
+  },
+  {
+    "endDate": "2025-07-11T00:00:00Z",
+    "event_id": "pm_house-odds-deriv",
+    "markets_count": 2,
+    "startDate": "2025-07-11T19:50:44.885Z",
+    "title": "Will the Democratic Party control the House after the 2026 Midterm elections?"
+  },
+  {
+    "endDate": "2028-11-07T00:00:00Z",
+    "event_id": "pm_republican-presidential-nominee-2028",
+    "markets_count": 31,
+    "startDate": "2025-07-11T19:42:02.412Z",
+    "title": "Will Donald Trump win the 2028 Republican presidential nomination?"
+  },
+  {
+    "endDate": "2026-07-01T00:00:00Z",
+    "event_id": "pm_2026-nba-champion",
+    "markets_count": 30,
+    "startDate": "2025-06-23T16:01:57.928832Z",
+    "title": "Will the Oklahoma City Thunder win the 2026 NBA Finals?"
+  },
+  {
+    "endDate": "2026-02-09T00:00:00Z",
+    "event_id": "pm_who-will-perform-at-super-bowl-halftime-show",
+    "markets_count": 33,
+    "startDate": "2025-06-25T22:31:45.301333Z",
+    "title": "Will Miley Cyrus perform during the Super Bowl LX halftime show?"
+  },
+  {
+    "endDate": "2026-11-03T00:00:00Z",
+    "event_id": "pm_balance-of-power-2026-midterms",
+    "markets_count": 5,
+    "startDate": "2025-07-11T21:05:18.843Z",
+    "title": "2026 Balance of Power: D Senate, D House"
+  },
+  {
+    "endDate": "2026-02-07T12:00:00Z",
+    "event_id": "pm_nfl-comeback-player-of-the-year",
+    "markets_count": 26,
+    "startDate": "2025-05-06T23:45:29.707162Z",
+    "title": "Will Aidan Hutchinson be the 2025-2026 NFL Comeback Player of the Year?"
+  },
+  {
+    "endDate": "2026-05-31T12:00:00Z",
+    "event_id": "pm_gta-vi-released-before-june-2026",
+    "markets_count": 1,
+    "startDate": "2025-05-02T17:00:26.233Z",
+    "title": "GTA VI released before June 2026?"
+  },
+  {
+    "endDate": "2026-03-31T12:00:00Z",
+    "event_id": "pm_bitboy-convicted",
+    "markets_count": 1,
+    "startDate": "2025-03-26T16:49:31.084Z",
+    "title": "BitBoy convicted?"
+  },
+  {
+    "endDate": "2026-02-01T05:00:00Z",
+    "event_id": "pm_megaeth-airdrop-by",
+    "markets_count": 1,
+    "startDate": "2025-06-26T19:51:03.475Z",
+    "title": "Will MegaETH perform an airdrop by June 30? "
+  },
+  {
+    "endDate": "2026-12-31T18:30:00Z",
+    "event_id": "pm_putin-out-as-president",
+    "markets_count": 1,
+    "startDate": "2025-07-06T22:30:10.584Z",
+    "title": "Putin out as President of Russia by end of 2026?"
+  },
+  {
+    "endDate": "2026-06-13T00:00:00Z",
+    "event_id": "pm_nba-eastern-conference-champion",
+    "markets_count": 10,
+    "startDate": "2025-07-17T12:14:37.782542Z",
+    "title": "Will the Cleveland Cavaliers win the NBA Eastern Conference Finals?"
+  },
+  {
+    "endDate": "2025-12-31T12:00:00Z",
+    "event_id": "pm_how-much-spending-will-doge-cut-in-2025",
+    "markets_count": 6,
+    "startDate": "2025-02-05T22:51:24.540447Z",
+    "title": "Will Elon and DOGE cut less than $50b in federal spending in 2025?"
+  },
+  {
+    "endDate": "2028-11-07T00:00:00Z",
+    "event_id": "pm_democratic-presidential-nominee-2028",
+    "markets_count": 43,
+    "startDate": "2025-07-11T18:35:56.805Z",
+    "title": "Will Gavin Newsom win the 2028 Democratic presidential nomination?"
+  },
+  {
+    "endDate": "2026-01-26T12:00:00Z",
+    "event_id": "pm_afc-champion",
+    "markets_count": 2,
+    "startDate": "2025-05-01T17:14:18.488Z",
+    "title": "Will the Patriots win the AFC Championship?"
+  },
+  {
+    "endDate": "2026-02-28T12:00:00Z",
+    "event_id": "pm_rojas-guilty-in-texas-illegal-abortion-case",
+    "markets_count": 1,
+    "startDate": "2025-03-18T16:52:11.450706Z",
+    "title": "Rojas guilty in Texas illegal abortion case?"
+  }
+]

@@ -1,304 +1,596 @@
-//! Market Observer (Kalshi + Polymarket)
+//! Knowledge Graph Building System för Kalshi ↔ Polymarket
 //!
-//! ╔═══════════════════════════════════════════════════════════════════════╗
-//! ║                                                                       ║
-//! ║         This branch observes market reality.                         ║
-//! ║         It does not attempt to understand it.                        ║
-//! ║                                                                       ║
-//! ╚═══════════════════════════════════════════════════════════════════════╝
-//!
-//! ## Purpose
-//!
-//! This program fetches ALL Kalshi markets via the official API and saves them
-//! as raw JSON. No filtering. No interpretation. No matching. No AI.
-//!
-//! ## Output
-//!
-//! - `kalshi_raw_markets.json` - Complete dump of all markets with metadata
-//!
-//! ## Next Steps (NOT in this branch)
-//!
-//! In the next branch, we will:
-//! 1. Feed this raw data to a state-of-the-art LLM
-//! 2. Let the LLM read contract texts and understand rules
-//! 3. Group markets the way a human would
-//! 4. Build probabilistic market matching
+//! PHASE 1: Full data ingestion
+//! PHASE 2: Semantic categorization (Polymarket → Kalshi taxonomy)
+//! PHASE 3: Event-level semantic matching (embedding + LLM verification)
+//! PHASE 4: Contract-level matching (within matched events)
+//! PHASE 5: Runtime scanning (no AI, only odds/liquidity)
 
+mod ai;
+mod matching;
+
+use std::fs;
+use std::collections::HashMap;
 use anyhow::Result;
-use tracing::info;
 
-mod config;
-mod kalshi;
-mod polymarket;
-mod types;
+const POLYMARKET_API_BASE: &str = "https://gamma-api.polymarket.com";
 
-use kalshi::{KalshiApiClient, KalshiConfig};
-use polymarket::PolymarketApiClient;
-use types::{RawMarketObservation, MarketForAI};
+// Kalshi-kategorier (source of truth)
+const KALSHI_CATEGORIES: &[&str] = &[
+    "Politics",
+    "Elections",
+    "Economics",
+    "World",
+    "Business",
+    "Science and Technology",
+    "Climate and Weather",
+    "Health",
+    "Entertainment",
+    "Sports",
+    "Culture",
+    "Energy",
+    "Finance",
+    "Crypto",
+    "Law and Justice",
+];
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // Initialize logging
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            tracing_subscriber::EnvFilter::from_default_env()
-                .add_directive("kalshi_observer=info".parse().unwrap()),
-        )
-        .init();
+    dotenvy::dotenv().ok();
 
-    info!("╔═══════════════════════════════════════════════════════════════════════╗");
-    info!("║                                                                       ║");
-    info!("║              🔍 Market Observer (Kalshi + Polymarket)                ║");
-    info!("║                                                                       ║");
-    info!("║         This branch observes market reality.                         ║");
-    info!("║         It does not attempt to understand it.                        ║");
-    info!("║                                                                       ║");
-    info!("╚═══════════════════════════════════════════════════════════════════════╝");
-    info!("");
+    let args: Vec<String> = std::env::args().collect();
+    let mode = args.get(1).map(|s| s.as_str()).unwrap_or("help");
 
-    // Load Kalshi credentials
-    let kalshi_config = KalshiConfig::from_env()?;
-    info!("✅ [AUTH] Kalshi credentials loaded");
+    match mode {
+        // PHASE 1: FULL DATA INGESTION
+        "ingest_kalshi" => {
+            println!("🔍 PHASE 1: Hämtar ALLA Kalshi events...\n");
+            fs::create_dir_all("data/kalshi/raw")?;
+            ingest_kalshi_events().await?;
+        }
+        "ingest_polymarket" => {
+            println!("🔍 PHASE 1: Hämtar ALLA Polymarket markets...\n");
+            fs::create_dir_all("data/polymarket/raw")?;
+            ingest_polymarket_markets().await?;
+        }
+        "build_polymarket_events" => {
+            println!("🔍 PHASE 1: Bygger Polymarket event-candidates...\n");
+            fs::create_dir_all("data/polymarket/derived")?;
+            build_polymarket_events().await?;
+        }
+        
+        // PHASE 2: SEMANTIC CATEGORIZATION
+        "categorize_polymarket" => {
+            println!("🔍 PHASE 2: Semantic categorization (Polymarket → Kalshi)...\n");
+            fs::create_dir_all("data/polymarket/derived")?;
+            categorize_polymarket_events().await?;
+        }
+        
+        // PHASE 3: EVENT-LEVEL SEMANTIC MATCHING
+        "match_events" => {
+            println!("🔍 PHASE 3: Event-level semantic matching...\n");
+            fs::create_dir_all("data/matching")?;
+            match_events_semantic().await?;
+        }
+        "match_events_embeddings" => {
+            println!("🔍 PHASE 3: Event-level matching (embeddings only)...\n");
+            fs::create_dir_all("data/matching")?;
+            match_events_embeddings_only().await?;
+        }
+        
+        // PHASE 4: CONTRACT-LEVEL MATCHING (placeholder)
+        "match_contracts" => {
+            println!("🔍 PHASE 4: Contract-level matching...\n");
+            println!("⚠️  Not yet implemented");
+        }
+        
+        // VERIFICATION
+        "count_events" => {
+            count_events()?;
+        }
+        "show_samples" => {
+            show_samples().await?;
+        }
+        "show_categories" => {
+            show_categories()?;
+        }
+        
+        _ => {
+            println!("Knowledge Graph Building System för Kalshi ↔ Polymarket\n");
+            println!("PHASE 1 - Full Data Ingestion:");
+            println!("  cargo run ingest_kalshi          # Hämta ALLA Kalshi events");
+            println!("  cargo run ingest_polymarket      # Hämta ALLA Polymarket markets");
+            println!("  cargo run build_polymarket_events # Bygg Polymarket event-candidates");
+            println!();
+            println!("PHASE 2 - Semantic Categorization:");
+            println!("  cargo run categorize_polymarket   # Kategorisera med lokal AI");
+            println!();
+            println!("PHASE 3 - Event-Level Matching:");
+            println!("  cargo run match_events_embeddings  # Embeddings only (top-10 candidates)");
+            println!("  cargo run match_events             # Embedding + LLM verification (pending)");
+            println!();
+            println!("PHASE 4 - Contract-Level Matching:");
+            println!("  cargo run match_contracts         # (Not yet implemented)");
+            println!();
+            println!("Verification:");
+            println!("  cargo run count_events            # Räkna events");
+            println!("  cargo run show_samples            # Visa exempel");
+            println!("  cargo run show_categories          # Visa kategorier");
+        }
+    }
 
-    // Create API client
-    let kalshi_client = KalshiApiClient::new(kalshi_config);
-    info!("✅ [CLIENT] Kalshi API client initialized");
-    info!("");
+    Ok(())
+}
 
-    // Fetch ALL events with nested markets
-    info!("🚀 [DISCOVERY] Starting full Kalshi market discovery...");
-    info!("   This will fetch ALL open events and markets from Kalshi");
-    info!("   No filtering. No interpretation. Just raw observation.");
-    info!("");
+// ============================================================================
+// PHASE 1: FULL DATA INGESTION
+// ============================================================================
 
-    let events = kalshi_client.discover_all_events_paginated().await?;
+async fn ingest_kalshi_events() -> Result<()> {
+    // Läser från befintlig data (ingen API-hämtning av markets)
+    let possible_paths = vec![
+        "data/kalshi/derived/kalshi_events_minimal.json",
+        "data/kalshi/raw/kalshi_events.json",
+    ];
     
-    info!("📊 [DISCOVERY] Raw statistics:");
-    info!("   Events discovered: {}", events.len());
+    let mut events_data: Vec<serde_json::Value> = Vec::new();
     
-    // Count total markets
-    let total_markets: usize = events.iter()
-        .filter_map(|e| e.markets.as_ref())
-        .map(|markets| markets.len())
-        .sum();
-    
-    info!("   Markets discovered: {}", total_markets);
-    info!("");
-
-    // Convert to observation records
-    info!("🔄 [PROCESSING] Converting to observation records...");
-    let mut observations: Vec<RawMarketObservation> = Vec::new();
-    
-    for event in &events {
-        if let Some(markets) = &event.markets {
-            for market in markets {
-                observations.push(RawMarketObservation::from_event_and_market(event, market));
+    for path in &possible_paths {
+        if let Ok(content) = fs::read_to_string(path) {
+            if let Ok(parsed) = serde_json::from_str::<Vec<serde_json::Value>>(&content) {
+                events_data = parsed;
+                println!("   📂 Läser från: {}", path);
+                break;
             }
         }
     }
     
-    info!("✅ [PROCESSING] Created {} observation records", observations.len());
-    info!("");
-
-    // Save RAW data to JSON
-    let raw_output_path = "data/kalshi/raw/kalshi_raw_markets.json";
-    info!("💾 [SAVE-RAW] Writing raw data to {}...", raw_output_path);
-    
-    let json = serde_json::to_string_pretty(&observations)?;
-    std::fs::write(raw_output_path, json)?;
-    
-    info!("✅ [SAVE-RAW] Successfully saved {} markets to {}", observations.len(), raw_output_path);
-    info!("");
-
-    // Show sample of what we captured
-    info!("📋 [SAMPLE] First 5 markets captured:");
-    for (i, obs) in observations.iter().take(5).enumerate() {
-        info!("   {}. {} | {}", i + 1, obs.market_ticker, obs.title);
-        if let Some(rules) = &obs.rules {
-            info!("      Rules: {}", rules);
-        }
+    if events_data.is_empty() {
+        return Err(anyhow::anyhow!("Ingen Kalshi events-fil hittades"));
     }
-    info!("");
-
-    // === STRUCTURED OBSERVATION (NO AI) ===
-    info!("🔄 [STRUCTURE] Converting to AI-ready format...");
-    info!("   This is mechanical transformation - NO interpretation");
-    info!("");
-
-    let mut structured_markets: Vec<MarketForAI> = Vec::new();
     
-    for raw in &observations {
-        structured_markets.push(MarketForAI::from_raw_kalshi(raw));
+    println!("   📊 Found {} events", events_data.len());
+    
+    // Normalisera struktur
+    let mut events = Vec::new();
+    for event_data in events_data {
+        let event = serde_json::json!({
+            "event_id": event_data.get("event_ticker").and_then(|e| e.as_str()).unwrap_or(""),
+            "title": event_data.get("title").and_then(|t| t.as_str()).unwrap_or(""),
+            "subtitle": event_data.get("sub_title").and_then(|s| s.as_str()).unwrap_or(""),
+            "category": event_data.get("category").and_then(|c| c.as_str()).unwrap_or("")
+        });
+        events.push(event);
     }
-
-    info!("✅ [STRUCTURE] Created {} structured records", structured_markets.len());
-    info!("");
-
-    // Save STRUCTURED data as JSONL (one line per market for easy streaming)
-    let structured_output_path = "data/kalshi/structured/kalshi_markets_structured.jsonl";
-    info!("💾 [SAVE-STRUCTURED] Writing structured data to {}...", structured_output_path);
     
-    let mut jsonl_lines = Vec::new();
-    for market in &structured_markets {
-        jsonl_lines.push(serde_json::to_string(&market)?);
-    }
-    std::fs::write(structured_output_path, jsonl_lines.join("\n"))?;
+    let output_path = "data/kalshi/derived/events.json";
+    fs::write(output_path, serde_json::to_string_pretty(&events)?)?;
+    println!("   ✅ Saved: {} ({} events)", output_path, events.len());
     
-    info!("✅ [SAVE-STRUCTURED] Successfully saved {} markets to {}", structured_markets.len(), structured_output_path);
-    info!("");
+    Ok(())
+}
 
-    // Show sample of structured format
-    info!("📋 [SAMPLE-STRUCTURED] First 3 structured records:");
-    for (i, market) in structured_markets.iter().take(3).enumerate() {
-        info!("   {}. [{}] {}", i + 1, market.market_ticker, market.event_text);
-        info!("      Series: {} | Status: {}", market.series_ticker, market.status);
-        if let Some(rules) = &market.rules_text {
-            info!("      Rules: {}", rules);
-        }
-        info!("      Time: {} → {}", 
-            market.time_window.open.as_deref().unwrap_or("N/A"),
-            market.time_window.close.as_deref().unwrap_or("N/A")
+async fn ingest_polymarket_markets() -> Result<()> {
+    let client = reqwest::Client::new();
+    let mut all_markets = Vec::new();
+    let mut offset = 0;
+    let limit = 1000;
+    let mut request_count = 0usize;
+    
+    loop {
+        let url = format!(
+            "{}/markets?closed=false&limit={}&offset={}",
+            POLYMARKET_API_BASE, limit, offset
         );
+        
+        println!("   GET {} (request #{})", url, request_count + 1);
+        request_count += 1;
+        
+        let response = client.get(&url).send().await?;
+        let status = response.status();
+        let text = response.text().await?;
+        
+        if !status.is_success() {
+            eprintln!("   ⚠️  Status: {}", status);
+            break;
+        }
+        
+        let json: serde_json::Value = serde_json::from_str(&text)?;
+        let markets_opt = json.as_array()
+            .or_else(|| json.get("data").and_then(|d| d.as_array()))
+            .or_else(|| json.get("markets").and_then(|m| m.as_array()));
+        
+        let markets = match markets_opt {
+            Some(arr) => arr,
+            None => break,
+        };
+        
+        if markets.is_empty() {
+            break;
+        }
+        
+        let mut page_markets = 0usize;
+        for market in markets {
+            let active = market.get("active").and_then(|a| a.as_bool()).unwrap_or(false);
+            let closed = market.get("closed").and_then(|c| c.as_bool()).unwrap_or(true);
+            
+            if active && !closed {
+                all_markets.push(market.clone());
+                page_markets += 1;
+            }
+        }
+        
+        println!("      Fetched {} active markets (total: {})", page_markets, all_markets.len());
+        
+        if markets.len() < limit {
+            break;
+        }
+        
+        offset += limit;
+        tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
     }
-    info!("");
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // POLYMARKET OBSERVATION
-    // ═══════════════════════════════════════════════════════════════════════
-
-    info!("════════════════════════════════════════════════════════════════════════");
-    info!("");
-    info!("🔵 [POLYMARKET] Starting observation...");
-    info!("");
-
-    // Create Polymarket client (no auth needed for Gamma API)
-    let poly_client = PolymarketApiClient::new();
     
-    // Fetch ALL markets
-    let poly_markets = poly_client.discover_all_markets().await?;
+    let markets_path = "data/polymarket/raw/markets_full.json";
+    fs::write(&markets_path, serde_json::to_string_pretty(&all_markets)?)?;
+    println!("\n   ✅ Saved: {} ({} markets, {} requests)", markets_path, all_markets.len(), request_count);
     
-    info!("📊 [POLYMARKET] Raw statistics:");
-    info!("   Markets discovered: {}", poly_markets.len());
-    info!("");
+    Ok(())
+}
 
-    // Save RAW Polymarket data
-    let poly_raw_path = "data/polymarket/raw/polymarket_raw_markets.json";
-    info!("💾 [SAVE-RAW] Writing raw Polymarket data to {}...", poly_raw_path);
+async fn build_polymarket_events() -> Result<()> {
+    let raw_content = fs::read_to_string("data/polymarket/raw/markets_full.json")?;
+    let markets: Vec<serde_json::Value> = serde_json::from_str(&raw_content)?;
     
-    let poly_json = serde_json::to_string_pretty(&poly_markets)?;
-    std::fs::write(poly_raw_path, poly_json)?;
+    println!("   📊 Found {} markets", markets.len());
     
-    info!("✅ [SAVE-RAW] Successfully saved {} markets to {}", poly_markets.len(), poly_raw_path);
-    info!("");
-
-    // Show sample
-    info!("📋 [SAMPLE] First 5 Polymarket markets:");
-    for (i, market) in poly_markets.iter().take(5).enumerate() {
-        info!("   {}. {} | {}", i + 1, market.id, market.question);
-        if let Some(desc) = &market.description {
-            info!("      Desc: {}", desc);
+    let mut events_map: HashMap<String, Vec<&serde_json::Value>> = HashMap::new();
+    
+    for market in &markets {
+        let synthetic_event_id = market
+            .get("events")
+            .and_then(|e| e.as_array())
+            .and_then(|arr| arr.get(0))
+            .and_then(|e| e.get("seriesSlug"))
+            .and_then(|s| s.as_str())
+            .map(|s| format!("pm_{}", s))
+            .or_else(|| {
+                market.get("events")
+                    .and_then(|e| e.as_array())
+                    .and_then(|arr| arr.get(0))
+                    .and_then(|e| e.get("title"))
+                    .and_then(|t| t.as_str())
+                    .map(|t| format!("pm_{}", normalize_question(t)))
+            });
+        
+        if let Some(event_id) = synthetic_event_id {
+            events_map.entry(event_id).or_insert_with(Vec::new).push(market);
         }
     }
-    info!("");
-
-    // === STRUCTURED OBSERVATION (Polymarket) ===
-    info!("🔄 [STRUCTURE] Converting Polymarket to AI-ready format...");
-    info!("   This is mechanical transformation - NO interpretation");
-    info!("");
-
-    let mut poly_structured: Vec<MarketForAI> = Vec::new();
     
-    for raw in &poly_markets {
-        poly_structured.push(MarketForAI::from_raw_polymarket(raw));
+    let mut events = Vec::new();
+    for (event_id, markets) in events_map {
+        let first_market = markets[0];
+        let title = first_market.get("question")
+            .and_then(|q| q.as_str())
+            .or_else(|| {
+                first_market.get("events")
+                    .and_then(|e| e.as_array())
+                    .and_then(|arr| arr.get(0))
+                    .and_then(|e| e.get("title"))
+                    .and_then(|t| t.as_str())
+            })
+            .unwrap_or("")
+            .to_string();
+        
+        events.push(serde_json::json!({
+            "event_id": event_id,
+            "title": title,
+            "markets_count": markets.len(),
+            "startDate": first_market.get("startDate"),
+            "endDate": first_market.get("endDate")
+        }));
     }
-
-    info!("✅ [STRUCTURE] Created {} structured Polymarket records", poly_structured.len());
-    info!("");
-
-    // Save STRUCTURED Polymarket data as JSONL
-    let poly_structured_path = "data/polymarket/structured/polymarket_markets_structured.jsonl";
-    info!("💾 [SAVE-STRUCTURED] Writing structured Polymarket data to {}...", poly_structured_path);
     
-    let mut poly_jsonl_lines = Vec::new();
-    for market in &poly_structured {
-        poly_jsonl_lines.push(serde_json::to_string(&market)?);
+    let output_path = "data/polymarket/derived/events.json";
+    fs::write(output_path, serde_json::to_string_pretty(&events)?)?;
+    println!("   ✅ Saved: {} ({} events)", output_path, events.len());
+    
+    Ok(())
+}
+
+fn normalize_question(question: &str) -> String {
+    question
+        .to_lowercase()
+        .chars()
+        .map(|c| if c.is_alphanumeric() || c == '-' || c == '_' { c } else { '-' })
+        .collect::<String>()
+        .replace("--", "-")
+        .trim_matches('-')
+        .to_string()
+}
+
+// ============================================================================
+// PHASE 2: SEMANTIC CATEGORIZATION
+// ============================================================================
+
+async fn categorize_polymarket_events() -> Result<()> {
+    // TODO: Implementera med lokal AI (embedding + LLM)
+    // För nu: placeholder med keyword-matching
+    println!("   ⚠️  Using keyword-based categorization (AI implementation pending)");
+    
+    let events_content = fs::read_to_string("data/polymarket/derived/events.json")?;
+    let events: Vec<serde_json::Value> = serde_json::from_str(&events_content)?;
+    
+    println!("   📊 Found {} Polymarket events", events.len());
+    
+    // Placeholder: keyword-matching (skulle vara AI här)
+    let category_keywords = get_category_keywords();
+    let mut categorized = Vec::new();
+    
+    for event in events {
+        let event_id = event.get("event_id").and_then(|id| id.as_str()).unwrap_or("");
+        let title = event.get("title").and_then(|t| t.as_str()).unwrap_or("").to_lowercase();
+        
+        let (assigned_category, confidence) = categorize_with_keywords(&title, &category_keywords);
+        
+        categorized.push(serde_json::json!({
+            "event_id": event_id,
+            "assigned_category": assigned_category,
+            "confidence": confidence
+        }));
     }
-    std::fs::write(poly_structured_path, poly_jsonl_lines.join("\n"))?;
     
-    info!("✅ [SAVE-STRUCTURED] Successfully saved {} markets to {}", poly_structured.len(), poly_structured_path);
-    info!("");
+    let output_path = "data/polymarket/derived/events_categorized.json";
+    fs::write(output_path, serde_json::to_string_pretty(&categorized)?)?;
+    println!("   ✅ Saved: {} ({} events)", output_path, categorized.len());
+    
+    Ok(())
+}
 
-    // Show sample of structured format
-    info!("📋 [SAMPLE-STRUCTURED] First 3 structured Polymarket records:");
-    for (i, market) in poly_structured.iter().take(3).enumerate() {
-        info!("   {}. [{}] {}", i + 1, market.market_ticker, market.event_text);
-        info!("      Series: {} | Status: {}", market.series_ticker, market.status);
-        if let Some(rules) = &market.rules_text {
-            let rules_preview = if rules.len() > 100 {
-                format!("{}...", &rules[..100])
-            } else {
-                rules.clone()
-            };
-            info!("      Rules: {}", rules_preview);
+fn get_category_keywords() -> HashMap<&'static str, Vec<&'static str>> {
+    let mut map = HashMap::new();
+    map.insert("Politics", vec!["president", "congress", "senate", "trump", "biden", "political"]);
+    map.insert("Elections", vec!["election", "vote", "voting", "ballot", "electoral"]);
+    map.insert("Economics", vec!["economy", "economic", "gdp", "inflation", "tariff", "trade"]);
+    map.insert("World", vec!["international", "global", "country", "nation", "war"]);
+    map.insert("Business", vec!["company", "corporate", "business", "merger", "ipo"]);
+    map.insert("Science and Technology", vec!["science", "technology", "tech", "ai", "space"]);
+    map.insert("Climate and Weather", vec!["climate", "weather", "temperature", "warming"]);
+    map.insert("Health", vec!["health", "medical", "disease", "pandemic", "vaccine"]);
+    map.insert("Entertainment", vec!["movie", "film", "tv", "celebrity", "award"]);
+    map.insert("Sports", vec!["sport", "football", "basketball", "olympics", "championship"]);
+    map.insert("Culture", vec!["culture", "art", "music", "literature"]);
+    map.insert("Energy", vec!["energy", "oil", "gas", "renewable", "solar"]);
+    map.insert("Finance", vec!["finance", "bank", "currency", "interest rate"]);
+    map.insert("Crypto", vec!["crypto", "bitcoin", "ethereum", "blockchain"]);
+    map.insert("Law and Justice", vec!["law", "court", "judge", "trial", "lawsuit"]);
+    map
+}
+
+fn categorize_with_keywords(title: &str, keywords: &HashMap<&str, Vec<&str>>) -> (String, f32) {
+    let mut best_category = "Unknown".to_string();
+    let mut best_score = 0.0;
+    
+    for (category, category_keywords) in keywords {
+        let mut score = 0.0;
+        for keyword in category_keywords {
+            if title.contains(keyword) {
+                score += 1.0;
+            }
         }
-        info!("      Time: {} → {}", 
-            market.time_window.open.as_deref().unwrap_or("N/A"),
-            market.time_window.close.as_deref().unwrap_or("N/A")
-        );
+        if score > best_score {
+            best_score = score;
+            best_category = category.to_string();
+        }
     }
-    info!("");
+    
+    let confidence = if best_score > 0.0 {
+        (best_score / 10.0_f64).min(1.0_f64).max(0.5_f64)
+    } else {
+        0.0
+    };
+    
+    (best_category, confidence as f32)
+}
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // GROUPING SCAFFOLD (NO AI, NO LOGIC)
-    // ═══════════════════════════════════════════════════════════════════════
+// ============================================================================
+// PHASE 3: EVENT-LEVEL SEMANTIC MATCHING
+// ============================================================================
 
-    info!("════════════════════════════════════════════════════════════════════════");
-    info!("");
-    info!("📦 [GROUPING] Creating empty grouping scaffold...");
-    info!("   This branch does NOT perform grouping.");
-    info!("   AI-driven grouping logic comes in next branch.");
-    info!("");
+async fn match_events_semantic() -> Result<()> {
+    println!("   ⚠️  Semantic matching with embeddings + LLM (implementation pending)");
+    println!("   📝 This will use:");
+    println!("      - bge-m3 for embeddings (high recall)");
+    println!("      - Qwen2.5-7B-Instruct for verification (high precision)");
+    
+    // TODO: Implementera med EventMatcher
+    // let embedding_engine = Box::new(ai::embedding::PythonEmbeddingEngine::default());
+    // let llm_verifier = Box::new(ai::verifier::PythonLLMVerifier::default());
+    // let mut matcher = matching::event_matcher::EventMatcher::new(embedding_engine, llm_verifier, 10);
+    
+    // Läs data
+    let kalshi_content = fs::read_to_string("data/kalshi/derived/events.json")?;
+    let poly_categorized_content = fs::read_to_string("data/polymarket/derived/events_categorized.json")?;
+    
+    println!("   📊 Kalshi events: {}", serde_json::from_str::<Vec<serde_json::Value>>(&kalshi_content)?.len());
+    println!("   📊 Polymarket events: {}", serde_json::from_str::<Vec<serde_json::Value>>(&poly_categorized_content)?.len());
+    
+    // Placeholder output
+    let matches: Vec<serde_json::Value> = Vec::new();
+    let output_path = "data/matching/event_matches.json";
+    fs::write(output_path, serde_json::to_string_pretty(&matches)?)?;
+    println!("   ✅ Saved: {} (0 matches - AI not yet implemented)", output_path);
+    
+    Ok(())
+}
 
-    // Create empty groups array (NO auto-grouping, NO logic)
-    // MarketGroup is an AI output container.
-    // This branch does not populate or modify groups.
-    // Grouping logic is intentionally absent.
-    let groups: Vec<types::MarketGroup> = Vec::new();
+async fn match_events_embeddings_only() -> Result<()> {
+    use crate::ai::embedding::PythonEmbeddingEngine;
+    use crate::matching::event_matcher::{EmbeddingOnlyMatcher, KalshiEvent, PolymarketEvent};
+    
+    println!("   📝 Using bge-m3 embeddings (no LLM verification)");
+    println!("   📝 Finding top-10 candidates per Kalshi event");
+    
+    // Läs Kalshi events
+    let kalshi_content = fs::read_to_string("data/kalshi/derived/events.json")?;
+    let kalshi_events_json: Vec<serde_json::Value> = serde_json::from_str(&kalshi_content)?;
+    
+    let mut kalshi_events = Vec::new();
+    for event_json in kalshi_events_json {
+        kalshi_events.push(KalshiEvent {
+            event_id: event_json.get("event_id").and_then(|e| e.as_str()).unwrap_or("").to_string(),
+            title: event_json.get("title").and_then(|t| t.as_str()).unwrap_or("").to_string(),
+            subtitle: event_json.get("subtitle").and_then(|s| s.as_str()).unwrap_or("").to_string(),
+            category: event_json.get("category").and_then(|c| c.as_str()).unwrap_or("").to_string(),
+        });
+    }
+    
+    // Läs Polymarket categorized events
+    let poly_categorized_content = fs::read_to_string("data/polymarket/derived/events_categorized.json")?;
+    let poly_categorized: Vec<serde_json::Value> = serde_json::from_str(&poly_categorized_content)?;
+    
+    let poly_events_content = fs::read_to_string("data/polymarket/derived/events.json")?;
+    let poly_events_json: Vec<serde_json::Value> = serde_json::from_str(&poly_events_content)?;
+    let poly_events_map: HashMap<String, serde_json::Value> = poly_events_json
+        .into_iter()
+        .map(|e| {
+            let id = e.get("event_id").and_then(|id| id.as_str()).unwrap_or("").to_string();
+            (id, e)
+        })
+        .collect();
+    
+    let mut polymarket_events = Vec::new();
+    for cat_event in poly_categorized {
+        let event_id = cat_event.get("event_id").and_then(|id| id.as_str()).unwrap_or("");
+        let assigned_category = cat_event.get("assigned_category").and_then(|c| c.as_str()).unwrap_or("Unknown");
+        
+        if assigned_category == "Unknown" {
+            continue;
+        }
+        
+        if let Some(event_data) = poly_events_map.get(event_id) {
+            let title = event_data.get("title").and_then(|t| t.as_str()).unwrap_or("").to_string();
+            polymarket_events.push(PolymarketEvent {
+                event_id: event_id.to_string(),
+                title,
+                assigned_category: assigned_category.to_string(),
+            });
+        }
+    }
+    
+    println!("   📊 Kalshi events: {}", kalshi_events.len());
+    println!("   📊 Polymarket events (categorized): {}", polymarket_events.len());
+    
+    // Skapa embedding engine
+    let mut embedding_engine = PythonEmbeddingEngine::default();
+    embedding_engine.reset_cache_stats();
+    let mut matcher = EmbeddingOnlyMatcher::new(Box::new(embedding_engine), 10);
+    
+    println!("\n   🔄 Computing embeddings and finding candidates...");
+    println!("   ⏳ This may take a while (embeddings are cached)");
+    println!("   📝 Progress will be shown below (from Python script)\n");
+    
+    // Hitta kandidater
+    let (kalshi_event_candidates, _cache_hits, _cache_misses) = matcher.find_candidates(&kalshi_events, &polymarket_events)?;
+    
+    // Cache-statistik visas i Python-scriptets stderr output
+    println!();
+    
+    // Räkna totala antalet kandidater
+    let total_candidates: usize = kalshi_event_candidates.iter().map(|kec| kec.candidates.len()).sum();
+    
+    println!("   ✅ Found {} Kalshi events with candidates", kalshi_event_candidates.len());
+    println!("   ✅ Total candidates: {}", total_candidates);
+    
+    // Spara kandidater (grupperat per Kalshi event)
+    let output_path = "data/matching/event_candidates.json";
+    let candidates_json: Vec<serde_json::Value> = kalshi_event_candidates
+        .iter()
+        .map(|kec| {
+            let candidates_json: Vec<serde_json::Value> = kec.candidates
+                .iter()
+                .map(|c| {
+                    serde_json::json!({
+                        "polymarket_event_id": c.polymarket_event_id,
+                        "embedding_score": c.embedding_score
+                    })
+                })
+                .collect();
+            
+            serde_json::json!({
+                "kalshi_event_id": kec.kalshi_event_id,
+                "candidates": candidates_json
+            })
+        })
+        .collect();
+    
+    fs::write(output_path, serde_json::to_string_pretty(&candidates_json)?)?;
+    println!("   ✅ Saved: {} ({} Kalshi events with candidates)", output_path, kalshi_event_candidates.len());
+    
+    // Visa statistik
+    if total_candidates > 0 {
+        let all_scores: Vec<f32> = kalshi_event_candidates
+            .iter()
+            .flat_map(|kec| kec.candidates.iter().map(|c| c.embedding_score))
+            .collect();
+        
+        let avg_score: f32 = all_scores.iter().sum::<f32>() / all_scores.len() as f32;
+        let max_score = all_scores.iter().fold(0.0f32, |a, &b| a.max(b));
+        let min_score = all_scores.iter().fold(1.0f32, |a, &b| a.min(b));
+        
+        println!("\n   📊 Statistics:");
+        println!("      Average score: {:.3}", avg_score);
+        println!("      Max score: {:.3}", max_score);
+        println!("      Min score: {:.3}", min_score);
+    }
+    
+    Ok(())
+}
 
-    // Write empty groups to file
-    let groups_path = "data/groups/market_groups.json";
-    let groups_json = serde_json::to_string_pretty(&groups)?;
-    std::fs::write(groups_path, groups_json)?;
+// ============================================================================
+// VERIFICATION
+// ============================================================================
 
-    info!("✅ [GROUPING] Empty scaffold created: {}", groups_path);
-    info!("   Groups: {} (intentionally empty)", groups.len());
-    info!("   Ready for future AI-driven grouping logic");
-    info!("");
+fn count_events() -> Result<()> {
+    if let Ok(content) = fs::read_to_string("data/kalshi/derived/events.json") {
+        if let Ok(events) = serde_json::from_str::<Vec<serde_json::Value>>(&content) {
+            println!("Kalshi events: {}", events.len());
+        }
+    }
+    if let Ok(content) = fs::read_to_string("data/polymarket/derived/events.json") {
+        if let Ok(events) = serde_json::from_str::<Vec<serde_json::Value>>(&content) {
+            println!("Polymarket events: {}", events.len());
+        }
+    }
+    Ok(())
+}
 
-    info!("╔═══════════════════════════════════════════════════════════════════════╗");
-    info!("║                                                                       ║");
-    info!("║                  ✅ OBSERVATION + STRUCTURING COMPLETE                ║");
-    info!("║                                                                       ║");
-    info!("║   Pipeline executed:                                                 ║");
-    info!("║   1. ✅ Fetched all Kalshi markets (RAW)                            ║");
-    info!("║   2. ✅ Fetched all Polymarket markets (RAW)                        ║");
-    info!("║   3. ✅ Mechanically structured for AI ingestion                    ║");
-    info!("║                                                                       ║");
-    info!("║   Outputs:                                                           ║");
-    info!("║   Kalshi:                                                            ║");
-    info!("║   • data/kalshi/raw/kalshi_raw_markets.json                         ║");
-    info!("║   • data/kalshi/structured/kalshi_markets_structured.jsonl          ║");
-    info!("║                                                                       ║");
-    info!("║   Polymarket:                                                        ║");
-    info!("║   • data/polymarket/raw/polymarket_raw_markets.json                 ║");
-    info!("║   • data/polymarket/structured/polymarket_markets_structured.jsonl  ║");
-    info!("║                                                                       ║");
-    info!("║   Total markets: {} Kalshi + {} Polymarket                      ║", 
-          structured_markets.len(), poly_structured.len());
-    info!("║                                                                       ║");
-    info!("║   Next branch: AI-driven cross-platform market grouping             ║");
-    info!("║                                                                       ║");
-    info!("╚═══════════════════════════════════════════════════════════════════════╝");
+async fn show_samples() -> Result<()> {
+    if let Ok(content) = fs::read_to_string("data/kalshi/derived/events.json") {
+        if let Ok(events) = serde_json::from_str::<Vec<serde_json::Value>>(&content) {
+            println!("=== KALSHI SAMPLE (3) ===\n");
+            for (idx, event) in events.iter().take(3).enumerate() {
+                println!("[{}] {}", idx + 1, serde_json::to_string_pretty(event)?);
+                println!();
+            }
+        }
+    }
+    if let Ok(content) = fs::read_to_string("data/polymarket/derived/events.json") {
+        if let Ok(events) = serde_json::from_str::<Vec<serde_json::Value>>(&content) {
+            println!("=== POLYMARKET SAMPLE (3) ===\n");
+            for (idx, event) in events.iter().take(3).enumerate() {
+                println!("[{}] {}", idx + 1, serde_json::to_string_pretty(event)?);
+                println!();
+            }
+        }
+    }
+    Ok(())
+}
 
+fn show_categories() -> Result<()> {
+    println!("=== KALSHI KATEGORIER (Source of Truth) ===\n");
+    for (idx, category) in KALSHI_CATEGORIES.iter().enumerate() {
+        println!("{}. {}", idx + 1, category);
+    }
     Ok(())
 }
