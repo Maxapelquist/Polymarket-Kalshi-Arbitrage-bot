@@ -103,7 +103,8 @@ class LocalLLMClient:
                     raise
     
     def _chat_ollama(self, messages: List[Dict[str, str]]) -> str:
-        """Chat via Ollama API"""
+        """Chat via Ollama API med fallback till /api/generate för äldre versioner"""
+        # Försök först /api/chat (nyare Ollama)
         url = f"{self.base_url}/api/chat"
         
         payload = {
@@ -113,11 +114,60 @@ class LocalLLMClient:
             "stream": False
         }
         
+        try:
+            response = requests.post(url, json=payload, timeout=self.timeout)
+            
+            # Om 404, fallback till /api/generate (äldre Ollama)
+            if response.status_code == 404:
+                print(f"  ⚠️  /api/chat not found (404), falling back to /api/generate", file=sys.stderr)
+                return self._generate_ollama(messages)
+            
+            response.raise_for_status()
+            data = response.json()
+            return data.get("message", {}).get("content", "")
+        except requests.exceptions.HTTPError as e:
+            # Om det är 404, försök generate
+            if e.response is not None and e.response.status_code == 404:
+                print(f"  ⚠️  /api/chat not found (404), falling back to /api/generate", file=sys.stderr)
+                return self._generate_ollama(messages)
+            # Logga andra HTTP-fel för debugging
+            print(f"  ❌ HTTP Error {e.response.status_code if e.response else 'unknown'}: {e}", file=sys.stderr)
+            raise
+        except requests.exceptions.RequestException as e:
+            # Logga nätverksfel
+            print(f"  ❌ Request error: {e}", file=sys.stderr)
+            raise
+    
+    def _generate_ollama(self, messages: List[Dict[str, str]]) -> str:
+        """Fallback: använd /api/generate för äldre Ollama-versioner"""
+        url = f"{self.base_url}/api/generate"
+        
+        # Konvertera messages till prompt (enkel konvertering)
+        prompt_parts = []
+        for msg in messages:
+            role = msg.get("role", "")
+            content = msg.get("content", "")
+            if role == "system":
+                prompt_parts.append(f"System: {content}")
+            elif role == "user":
+                prompt_parts.append(f"User: {content}")
+            elif role == "assistant":
+                prompt_parts.append(f"Assistant: {content}")
+        
+        prompt = "\n".join(prompt_parts) + "\nAssistant:"
+        
+        payload = {
+            "model": self.model,
+            "prompt": prompt,
+            "temperature": self.temperature,
+            "stream": False
+        }
+        
         response = requests.post(url, json=payload, timeout=self.timeout)
         response.raise_for_status()
         
         data = response.json()
-        return data.get("message", {}).get("content", "")
+        return data.get("response", "")
     
     def _chat_lmstudio(self, messages: List[Dict[str, str]]) -> str:
         """Chat via LM Studio (OpenAI-compatible) API"""
