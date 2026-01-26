@@ -17,6 +17,11 @@ from collections import defaultdict
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from local_llm_client import get_client
 
+try:
+    from tqdm import tqdm
+except ImportError:
+    tqdm = None
+
 def load_jsonl(path: str) -> List[Dict[str, Any]]:
     """Ladda JSONL-fil"""
     if not os.path.exists(path):
@@ -195,14 +200,15 @@ def main():
     print(f"   Redan klassificerade: {len(existing_pm)}", file=sys.stderr)
     
     pm_classified = list(existing_pm.values())
+    remaining_pm = [(event_id, event_text) for event_id, event_text in pm_event_texts.items() if event_id not in existing_pm]
     processed = 0
-    for event_id, event_text in pm_event_texts.items():
+    iterator = remaining_pm
+    if tqdm:
+        iterator = tqdm(remaining_pm, desc="PM klassificering", unit="event", dynamic_ncols=True)
+    for event_id, event_text in iterator:
         # Hoppa över om redan klassificerad
-        if event_id in existing_pm:
-            continue
-        
         processed += 1
-        if processed % 10 == 0:
+        if not tqdm and processed % 10 == 0:
             print(f"   Processed {processed} nya events...", file=sys.stderr)
         
         result = classify_event(event_id, event_text, categories, client)
@@ -239,14 +245,19 @@ def main():
     print(f"   Redan klassificerade: {len(existing_kalshi)}", file=sys.stderr)
     
     kalshi_classified = list(existing_kalshi.values())
+    remaining_kalshi = [
+        (event_id, event_text)
+        for event_id, event_text in kalshi_event_texts.items()
+        if event_id not in existing_kalshi
+    ]
     processed = 0
-    for event_id, event_text in kalshi_event_texts.items():
+    iterator = remaining_kalshi
+    if tqdm:
+        iterator = tqdm(remaining_kalshi, desc="Kalshi klassificering", unit="event", dynamic_ncols=True)
+    for event_id, event_text in iterator:
         # Hoppa över om redan klassificerad
-        if event_id in existing_kalshi:
-            continue
-        
         processed += 1
-        if processed % 10 == 0:
+        if not tqdm and processed % 10 == 0:
             print(f"   Processed {processed} nya events...", file=sys.stderr)
         
         result = classify_event(event_id, event_text, categories, client)
