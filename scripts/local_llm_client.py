@@ -54,6 +54,27 @@ class LocalLLMClient:
             return response.status_code == 200
         except Exception:
             return False
+
+    def _ollama_model_error(self, response: requests.Response) -> Optional[str]:
+        """Returnera felmeddelande om Ollama svarar med model-fel."""
+        try:
+            payload = response.json()
+        except ValueError:
+            return None
+        error_msg = str(payload.get("error", "")).lower()
+        if "model" in error_msg and ("not found" in error_msg or "required" in error_msg):
+            return error_msg
+        return None
+
+    def _ollama_available_models(self) -> List[str]:
+        """Hämta tillgängliga Ollama-modeller."""
+        try:
+            response = requests.get(f"{self.base_url}/api/tags", timeout=5)
+            response.raise_for_status()
+            data = response.json()
+            return [entry.get("name", "") for entry in data.get("models", []) if entry.get("name")]
+        except Exception:
+            return []
     
     def chat(self, messages: List[Dict[str, str]], retries: int = 3) -> str:
         """
@@ -114,10 +135,69 @@ class LocalLLMClient:
         }
         
         response = requests.post(url, json=payload, timeout=self.timeout)
-        response.raise_for_status()
-        
+        model_error = self._ollama_model_error(response)
+        if model_error:
+            available = self._ollama_available_models()
+            available_str = ", ".join(available) if available else "No models found (run `ollama list`)"
+            raise ValueError(
+                f"Ollama model error: {model_error}. "
+                f"Set LOCAL_LLM_MODEL to one of: {available_str}"
+            )
+        if response.status_code == 404:
+            return self._generate_ollama(messages)
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as exc:
+            status_code = exc.response.status_code if exc.response else None
+            if status_code == 404:
+                return self._generate_ollama(messages)
+            raise
+
         data = response.json()
         return data.get("message", {}).get("content", "")
+
+    def _generate_ollama(self, messages: List[Dict[str, str]]) -> str:
+        """Fallback för äldre Ollama: använd /api/generate."""
+        url = f"{self.base_url}/api/generate"
+
+        prompt = ""
+        for msg in messages:
+            role = msg.get("role", "")
+            content = msg.get("content", "")
+            if role == "system":
+                prompt += f"System: {content}\n\n"
+            elif role == "user":
+                prompt += f"User: {content}\n\n"
+            elif role == "assistant":
+                prompt += f"Assistant: {content}\n\n"
+        prompt += "Assistant:"
+
+        payload = {
+            "model": self.model,
+            "prompt": prompt,
+            "temperature": self.temperature,
+            "stream": False
+        }
+
+        response = requests.post(url, json=payload, timeout=self.timeout)
+        model_error = self._ollama_model_error(response)
+        if model_error:
+            available = self._ollama_available_models()
+            available_str = ", ".join(available) if available else "No models found (run `ollama list`)"
+            raise ValueError(
+                f"Ollama model error: {model_error}. "
+                f"Set LOCAL_LLM_MODEL to one of: {available_str}"
+            )
+        if response.status_code == 404:
+            raise RuntimeError(
+                f"Ollama endpoint not found at {url}. "
+                "Your server may not support /api/chat or /api/generate. "
+                "Check the base URL and Ollama version."
+            )
+        response.raise_for_status()
+
+        data = response.json()
+        return data.get("response", "")
     
     def _chat_lmstudio(self, messages: List[Dict[str, str]]) -> str:
         """Chat via LM Studio (OpenAI-compatible) API"""
