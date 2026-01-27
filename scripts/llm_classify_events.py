@@ -22,6 +22,62 @@ try:
 except ImportError:
     tqdm = None
 
+def normalize_category(category: str, valid_categories: List[str]) -> Optional[str]:
+    """
+    Normalisera kategori från LLM till exakt match mot valid_categories.
+    Hanterar: lowercase, trim, alias-mappning, delvis match.
+    """
+    if not category:
+        return None
+    
+    # Normalisera: lowercase, strip
+    normalized = category.strip().lower()
+    
+    # Direkt match (case-insensitive)
+    for valid in valid_categories:
+        if valid.lower() == normalized:
+            return valid
+    
+    # Alias-mappning (vanliga varianter)
+    alias_map = {
+        "political": "Politics",
+        "politics": "Politics",
+        "election": "Elections",
+        "economic": "Economics",
+        "economy": "Economics",
+        "business": "Business",
+        "tech": "Science and Technology",
+        "technology": "Science and Technology",
+        "science": "Science and Technology",
+        "climate": "Climate and Weather",
+        "weather": "Climate and Weather",
+        "health": "Health",
+        "entertainment": "Entertainment",
+        "sport": "Sports",
+        "sports": "Sports",
+        "culture": "Culture",
+        "energy": "Energy",
+        "finance": "Finance",
+        "financial": "Finance",
+        "crypto": "Crypto",
+        "cryptocurrency": "Crypto",
+        "law": "Law and Justice",
+        "justice": "Law and Justice",
+        "legal": "Law and Justice",
+        "world": "World",
+    }
+    
+    if normalized in alias_map:
+        return alias_map[normalized]
+    
+    # Delvis match (t.ex. "Science and Technology" matchar "science")
+    for valid in valid_categories:
+        valid_lower = valid.lower()
+        if normalized in valid_lower or valid_lower in normalized:
+            return valid
+    
+    return None
+
 def load_jsonl(path: str) -> List[Dict[str, Any]]:
     """Ladda JSONL-fil"""
     if not os.path.exists(path):
@@ -126,11 +182,27 @@ Rules:
             response = response[:-3]
         response = response.strip()
         
+        # Försök hitta JSON-objekt i response (hantera extra text)
+        json_start = response.find("{")
+        json_end = response.rfind("}") + 1
+        if json_start >= 0 and json_end > json_start:
+            response = response[json_start:json_end]
+        
         result = json.loads(response)
         
-        # Validera
-        if result.get("category") not in categories:
-            raise ValueError(f"Invalid category: {result.get('category')}")
+        # Normalisera kategori
+        raw_category = result.get("category", "")
+        normalized_category = normalize_category(raw_category, categories)
+        
+        if not normalized_category:
+            raise ValueError(f"Could not normalize category: '{raw_category}' (valid: {categories})")
+        
+        result["category"] = normalized_category
+        
+        # Validera confidence
+        confidence = result.get("confidence", 0.0)
+        if not isinstance(confidence, (int, float)) or confidence < 0 or confidence > 1:
+            result["confidence"] = 0.5  # Default om ogiltig
         
         # Lägg till metadata
         result["event_id"] = event_id
@@ -141,6 +213,18 @@ Rules:
         save_to_cache(cache_key, result)
         
         return result
+    except json.JSONDecodeError as e:
+        print(f"  ❌ JSON parse error för {event_id}: {e}", file=sys.stderr)
+        print(f"     Response: {response[:200]}...", file=sys.stderr)
+        return {
+            "event_id": event_id,
+            "category": "Unknown",
+            "confidence": 0.0,
+            "rationale_short": f"JSON parse error: {str(e)}",
+            "evidence": [],
+            "model": "error",
+            "ts": str(int(time.time()))
+        }
     except Exception as e:
         print(f"  ❌ Fel vid klassificering av {event_id}: {e}", file=sys.stderr)
         return {
@@ -185,14 +269,20 @@ def main():
     os.makedirs("data/matching", exist_ok=True)
     pm_output = "data/matching/pm_event_categories.jsonl"
     
-    # Checkpoint: ladda redan klassificerade events
+    # Checkpoint: ladda redan klassificerade events (hoppa över "Unknown" med error)
     existing_pm = {}
     if os.path.exists(pm_output):
         for line in open(pm_output, "r"):
             if line.strip():
                 try:
                     existing = json.loads(line)
-                    existing_pm[existing.get("event_id", "")] = existing
+                    event_id = existing.get("event_id", "")
+                    category = existing.get("category", "")
+                    model = existing.get("model", "")
+                    # Hoppa över events med "Unknown" och "error" model (kör om dem)
+                    if category == "Unknown" and model == "error":
+                        continue
+                    existing_pm[event_id] = existing
                 except:
                     pass
     
@@ -230,14 +320,20 @@ def main():
     # Klassificera Kalshi events
     kalshi_output = "data/matching/kalshi_event_categories.jsonl"
     
-    # Checkpoint: ladda redan klassificerade events
+    # Checkpoint: ladda redan klassificerade events (hoppa över "Unknown" med error)
     existing_kalshi = {}
     if os.path.exists(kalshi_output):
         for line in open(kalshi_output, "r"):
             if line.strip():
                 try:
                     existing = json.loads(line)
-                    existing_kalshi[existing.get("event_id", "")] = existing
+                    event_id = existing.get("event_id", "")
+                    category = existing.get("category", "")
+                    model = existing.get("model", "")
+                    # Hoppa över events med "Unknown" och "error" model (kör om dem)
+                    if category == "Unknown" and model == "error":
+                        continue
+                    existing_kalshi[event_id] = existing
                 except:
                     pass
     
