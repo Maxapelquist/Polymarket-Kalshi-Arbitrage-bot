@@ -9,15 +9,8 @@ import json
 import sys
 import os
 import time
-import hashlib
-from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional, Tuple
-from collections import defaultdict, Counter
-
-try:
-    from tqdm import tqdm
-except ImportError:
-    tqdm = None
+from collections import defaultdict
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from local_llm_client import get_client
@@ -34,29 +27,8 @@ def load_jsonl(path: str) -> List[Dict[str, Any]]:
             docs.append(json.loads(line))
     return docs
 
-def parse_datetime(dt_str: str) -> Optional[datetime]:
-    """Parse datetime från olika format"""
-    if not dt_str:
-        return None
-    
-    # Försök olika format
-    formats = [
-        "%Y-%m-%dT%H:%M:%SZ",  # ISO med Z
-        "%Y-%m-%dT%H:%M:%S.%fZ",  # ISO med microseconds
-        "%Y-%m-%dT%H:%M:%S",  # ISO utan Z
-        "%Y-%m-%d",  # Bara datum
-    ]
-    
-    for fmt in formats:
-        try:
-            return datetime.strptime(dt_str, fmt)
-        except ValueError:
-            continue
-    
-    return None
-
-def load_event_texts_and_times(market_docs_path: str) -> Tuple[Dict[str, str], Dict[str, Optional[datetime]]]:
-    """Ladda event_texts och end_times från market_docs"""
+def load_event_texts(market_docs_path: str) -> Dict[str, str]:
+    """Ladda event_texts från market_docs"""
     from collections import defaultdict
     
     docs = load_jsonl(market_docs_path)
@@ -67,139 +39,83 @@ def load_event_texts_and_times(market_docs_path: str) -> Tuple[Dict[str, str], D
             events_to_markets[event_id].append(doc)
     
     event_texts = {}
-    event_end_times = {}
-    
     for event_id, markets in events_to_markets.items():
         texts = []
-        end_times = []
-        
         for market in markets[:10]:
             text = market.get("text", "") or market.get("title", "")
             if text:
                 texts.append(text)
-            
-            # Samla end_times från markets
-            end_time_str = market.get("end_time", "")
-            if end_time_str:
-                end_times.append(end_time_str)
-        
         event_text = " | ".join(texts) if texts else event_id
         event_texts[event_id] = event_text
-        
-        # Ta senaste end_time från markets (eller första om bara en)
-        if end_times:
-            # Sortera och ta senaste
-            parsed_times = [(parse_datetime(et), et) for et in end_times]
-            parsed_times = [(dt, et) for dt, et in parsed_times if dt is not None]
-            if parsed_times:
-                parsed_times.sort(key=lambda x: x[0], reverse=True)
-                event_end_times[event_id] = parsed_times[0][0]
-            else:
-                event_end_times[event_id] = None
-        else:
-            event_end_times[event_id] = None
     
-    return event_texts, event_end_times
+    return event_texts
 
-def candidate_retrieval(
-    kalshi_event_id: str,
-    kalshi_text: str,
-    pm_candidates: List[Tuple[str, str]],  # (event_id, title)
-    client,
-    max_candidates: int = 30
-) -> List[Tuple[str, float]]:
-    """
-    Steg A: Candidate retrieval - LLM väljer top-3 från menu.
-    """
-    if len(pm_candidates) <= 3:
-        return [(pid, 1.0) for pid, _ in pm_candidates]
-    
-    # Chunk om för många
-    if len(pm_candidates) > max_candidates:
-        # Tournament: dela i chunks, ta winner från varje
-        chunk_size = max_candidates
-        winners = []
-        for i in range(0, len(pm_candidates), chunk_size):
-            chunk = pm_candidates[i:i+chunk_size]
-            chunk_winners = candidate_retrieval(kalshi_event_id, kalshi_text, chunk, client, max_candidates)
-            winners.extend(chunk_winners)
-        # Rekursivt: matcha winners
-        if len(winners) > 3:
-            return candidate_retrieval(kalshi_event_id, kalshi_text, 
-                                      [(pid, "") for pid, _ in winners[:max_candidates]], 
-                                      client, max_candidates)
-        return winners[:3]
-    
-    # Bygg menu
-    menu_items = []
-    for idx, (pm_id, pm_title) in enumerate(pm_candidates, 1):
-        menu_items.append(f"{idx}. {pm_title} (id: {pm_id})")
-    
-    menu_text = "\n".join(menu_items)
-    
-    prompt = f"""Given this Kalshi event, select the top 3 most relevant Polymarket events from the menu below.
+def extract_json_object(response: str) -> Optional[str]:
+    """Extrahera första JSON-objektet från en LLM-respons."""
+    if not response:
+        return None
+    response = response.strip()
+    if response.startswith("```"):
+        response = response.strip("`")
+        response = response.replace("json", "", 1).strip()
 
-Kalshi event:
-{kalshi_text}
+    start = response.find("{")
+    if start == -1:
+        return None
 
-Polymarket candidates:
-{menu_text}
+    depth = 0
+    in_string = False
+    escape = False
+    for i in range(start, len(response)):
+        ch = response[i]
+        if ch == "\\" and in_string:
+            escape = not escape
+            continue
+        if ch == "\"" and not escape:
+            in_string = not in_string
+        escape = False
+        if in_string:
+            continue
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return response[start:i + 1]
+    return None
 
-Respond with ONLY valid JSON (no markdown):
-{{"top3": [{{"index": 1, "score": 0.0}}, {{"index": 2, "score": 0.0}}, {{"index": 3, "score": 0.0}}]}}
-
-Rules:
-- index: number from menu (1-N)
-- score: 0.0 to 1.0 (relevance)
-- Return exactly 3 items
-"""
-    
-    messages = [
-        {"role": "system", "content": "You are a precise event matcher. Always respond with valid JSON only."},
-        {"role": "user", "content": prompt}
-    ]
-    
+def parse_llm_json(response: str) -> Optional[Dict[str, Any]]:
+    payload = extract_json_object(response)
+    if not payload:
+        return None
     try:
-        response = client.chat(messages)
-        raw_response = response  # Spara för logging
-        response = response.strip()
-        if response.startswith("```json"):
-            response = response[7:]
-        if response.startswith("```"):
-            response = response[3:]
-        if response.endswith("```"):
-            response = response[:-3]
-        response = response.strip()
-        
-        # Försök hitta JSON-objekt i response (hantera extra text)
-        json_start = response.find("{")
-        json_end = response.rfind("}") + 1
-        if json_start >= 0 and json_end > json_start:
-            response = response[json_start:json_end]
-        
-        result = json.loads(response)
-        top3 = result.get("top3", [])
-        
-        # Konvertera index till event_id
-        candidates_with_scores = []
-        for item in top3[:3]:
-            idx = item.get("index", 0) - 1
-            score = float(item.get("score", 0.0))
-            if 0 <= idx < len(pm_candidates):
-                pm_id = pm_candidates[idx][0]
-                candidates_with_scores.append((pm_id, score))
-        
-        return candidates_with_scores
-    except json.JSONDecodeError as e:
-        print(f"  ⚠️  Candidate retrieval JSON parse error: {e}", file=sys.stderr)
-        print(f"     Raw response (first 300 chars): {raw_response[:300]}", file=sys.stderr)
-        print(f"     Extracted JSON: {response[:300] if 'response' in locals() else 'N/A'}", file=sys.stderr)
-        return [(pid, 0.5) for pid, _ in pm_candidates[:3]]
-    except Exception as e:
-        print(f"  ⚠️  Candidate retrieval failed: {e}, using first 3", file=sys.stderr)
-        if 'raw_response' in locals():
-            print(f"     Raw response (first 300 chars): {raw_response[:300]}", file=sys.stderr)
-        return [(pid, 0.5) for pid, _ in pm_candidates[:3]]
+        return json.loads(payload)
+    except json.JSONDecodeError:
+        return None
+
+def normalize_end_time(value: Optional[str]) -> Optional[str]:
+    if not value:
+        return None
+    return value.split("T")[0]
+
+def load_event_end_times(market_docs_path: str) -> Dict[str, List[str]]:
+    docs = load_jsonl(market_docs_path)
+    end_times: Dict[str, List[str]] = defaultdict(list)
+    for doc in docs:
+        event_id = doc.get("event_id", "")
+        end_time = normalize_end_time(doc.get("end_time") or doc.get("close_time"))
+        if not event_id or not end_time:
+            continue
+        if end_time not in end_times[event_id]:
+            end_times[event_id].append(end_time)
+    return end_times
+
+def build_end_time_index(event_end_times: Dict[str, List[str]]) -> Dict[str, List[str]]:
+    index: Dict[str, List[str]] = defaultdict(list)
+    for event_id, end_times in event_end_times.items():
+        for end_time in end_times:
+            index[end_time].append(event_id)
+    return index
 
 def pair_decision(
     kalshi_event_id: str,
@@ -237,55 +153,14 @@ Rules:
     
     try:
         response = client.chat(messages)
-        raw_response = response  # Spara för logging
-        response = response.strip()
-        if response.startswith("```json"):
-            response = response[7:]
-        if response.startswith("```"):
-            response = response[3:]
-        if response.endswith("```"):
-            response = response[:-3]
-        response = response.strip()
-        
-        # Försök hitta JSON-objekt i response (hantera extra text)
-        # Först: hitta första kompletta JSON-objekt
-        json_start = response.find("{")
-        if json_start >= 0:
-            # Hitta matchande }
-            brace_count = 0
-            json_end = json_start
-            for i in range(json_start, len(response)):
-                if response[i] == '{':
-                    brace_count += 1
-                elif response[i] == '}':
-                    brace_count -= 1
-                    if brace_count == 0:
-                        json_end = i + 1
-                        break
-            if json_end > json_start:
-                response = response[json_start:json_end]
-        
-        result = json.loads(response)
+        result = parse_llm_json(response)
+        if not isinstance(result, dict):
+            raise ValueError("Missing or invalid JSON payload")
         result["kalshi_event_id"] = kalshi_event_id
         result["pm_event_id"] = pm_event_id
         return result
-    except json.JSONDecodeError as e:
-        print(f"  ⚠️  Pair decision JSON parse error: {e}", file=sys.stderr)
-        print(f"     Raw response (first 300 chars): {raw_response[:300]}", file=sys.stderr)
-        print(f"     Extracted JSON: {response[:300] if 'response' in locals() else 'N/A'}", file=sys.stderr)
-        return {
-            "match": False,
-            "confidence": 0.0,
-            "why_short": f"JSON parse error: {str(e)}",
-            "fields_aligned": [],
-            "fields_conflict": [],
-            "kalshi_event_id": kalshi_event_id,
-            "pm_event_id": pm_event_id
-        }
     except Exception as e:
         print(f"  ⚠️  Pair decision failed: {e}", file=sys.stderr)
-        if 'raw_response' in locals():
-            print(f"     Raw response (first 300 chars): {raw_response[:300]}", file=sys.stderr)
         return {
             "match": False,
             "confidence": 0.0,
@@ -308,24 +183,17 @@ def main():
     pm_categories = load_jsonl("data/matching/pm_event_categories.jsonl")
     kalshi_categories = load_jsonl("data/matching/kalshi_event_categories.jsonl")
     
-    # Ladda event texts och end_times
-    pm_texts, pm_end_times = load_event_texts_and_times("data/polymarket/derived/polymarket_market_docs.jsonl")
-    kalshi_texts, kalshi_end_times = load_event_texts_and_times("data/kalshi/derived/kalshi_market_docs.jsonl")
-    
-    # Tidsfönster-filter (dagar)
-    time_window_days = int(os.getenv("MATCH_TIME_WINDOW_DAYS", "30"))
-    print(f"   Tidsfönster-filter: {time_window_days} dagar", file=sys.stderr)
-    
-    # Filtrera till en kategori om angiven (för testning)
-    test_category = os.getenv("TEST_CATEGORY", "")
-    if test_category:
-        if test_category not in categories:
-            print(f"⚠️  Varning: '{test_category}' finns inte i kategorier. Tillgängliga: {', '.join(categories)}", file=sys.stderr)
-            print(f"   Körer alla kategorier istället.", file=sys.stderr)
-            test_category = ""
-        else:
-            print(f"🧪 TEST-LÄGE: Körer endast kategori '{test_category}'", file=sys.stderr)
-            categories = [test_category]
+    # Ladda event texts
+    pm_docs_path = "data/polymarket/derived/polymarket_market_docs.jsonl"
+    kalshi_docs_path = "data/kalshi/derived/kalshi_market_docs.jsonl"
+    pm_texts = load_event_texts(pm_docs_path)
+    kalshi_texts = load_event_texts(kalshi_docs_path)
+    pm_end_times = load_event_end_times(pm_docs_path)
+    kalshi_end_times = load_event_end_times(kalshi_docs_path)
+    pm_end_time_index = build_end_time_index(pm_end_times)
+
+    max_candidates = int(os.getenv("MAX_TIME_CANDIDATES", "10"))
+    allow_no_time_match = os.getenv("ALLOW_NO_TIME_MATCH", "0") == "1"
     
     # Gruppera events per kategori
     pm_by_category = defaultdict(list)
@@ -382,157 +250,110 @@ def main():
     
     stats = defaultdict(int)
     
-    # Räkna totalt antal Kalshi events att matcha
-    total_kalshi_to_match = 0
+    print(f"\n🔄 Matchar events per kategori...", file=sys.stderr)
+    
     for category in categories:
         kalshi_events = kalshi_by_category.get(category, [])
         pm_events = pm_by_category.get(category, [])
-        if kalshi_events and pm_events:
-            # Filtrera bort redan matchade
-            for kalshi_id in kalshi_events:
-                already_matched = any(b.get("kalshi_event_ticker") == kalshi_id for b in high_conf_bridges)
-                if not already_matched:
-                    total_kalshi_to_match += 1
-    
-    print(f"\n🔄 Matchar events per kategori...", file=sys.stderr)
-    print(f"   Totalt att matcha: {total_kalshi_to_match} Kalshi events", file=sys.stderr)
-    
-    # Progress bar
-    matched_count = 0
-    if tqdm:
-        pbar = tqdm(total=total_kalshi_to_match, desc="Matching", unit="event", file=sys.stderr)
-    else:
-        pbar = None
-    
-    try:
-        for category in categories:
-            kalshi_events = kalshi_by_category.get(category, [])
-            pm_events = pm_by_category.get(category, [])
-            
-            if not kalshi_events or not pm_events:
+        
+        if not kalshi_events or not pm_events:
+            continue
+        
+        print(f"\n   Kategori: {category} ({len(kalshi_events)} Kalshi, {len(pm_events)} Polymarket)", file=sys.stderr)
+        
+        for kalshi_id in kalshi_events:
+            # Checkpoint: hoppa över om redan matchad
+            already_matched = any(b.get("kalshi_event_ticker") == kalshi_id for b in high_conf_bridges)
+            if already_matched:
                 continue
             
-            if not pbar:
-                print(f"\n   Kategori: {category} ({len(kalshi_events)} Kalshi, {len(pm_events)} Polymarket)", file=sys.stderr)
-            
-            # Bygg PM candidates (exkludera redan matchade + tidsfönster-filter)
-            pm_candidates_list = []
-            filtered_by_time = 0
-            
-            for pid in pm_events:
-                if pid in pm_matched:
-                    continue
-                
-                # Tidsfönster-filter: jämför med alla Kalshi events i kategorin
-                # Om minst ett Kalshi event har end_time inom fönstret, inkludera PM event
-                pm_end_time = pm_end_times.get(pid)
-                if pm_end_time:
-                    # Kolla om något Kalshi event i kategorin är inom tidsfönstret
-                    within_window = False
-                    for kid in kalshi_events:
-                        kalshi_end_time = kalshi_end_times.get(kid)
-                        if kalshi_end_time:
-                            time_diff = abs((pm_end_time - kalshi_end_time).days)
-                            if time_diff <= time_window_days:
-                                within_window = True
-                                break
-                    
-                    if not within_window:
-                        filtered_by_time += 1
-                        continue
-                
-                pm_candidates_list.append((pid, pm_texts.get(pid, pid)))
-            
-            if filtered_by_time > 0:
-                print(f"   Filtrerade bort {filtered_by_time} PM events p.g.a. tidsfönster", file=sys.stderr)
-            
-            if not pm_candidates_list:
-                continue
-            
-            for kalshi_id in kalshi_events:
-                # Checkpoint: hoppa över om redan matchad
-                already_matched = any(b.get("kalshi_event_ticker") == kalshi_id for b in high_conf_bridges)
-                if already_matched:
-                    if pbar:
-                        pbar.update(1)
-                    continue
-                
-                kalshi_text = kalshi_texts.get(kalshi_id, kalshi_id)
-                
-                # Steg A: Candidate retrieval
-                top3 = candidate_retrieval(kalshi_id, kalshi_text, pm_candidates_list, client)
-                
-                # Steg B: Pair decision för top-3
-                best_match = None
-                best_confidence = 0.0
-                
-                for pm_id, _ in top3:
+            kalshi_text = kalshi_texts.get(kalshi_id, kalshi_id)
+            kalshi_time_values = kalshi_end_times.get(kalshi_id, [])
+
+            pm_candidates = []
+            for end_time in kalshi_time_values:
+                for pm_id in pm_end_time_index.get(end_time, []):
                     if pm_id in pm_matched:
                         continue
-                    
-                    pm_text = pm_texts.get(pm_id, pm_id)
-                    decision = pair_decision(kalshi_id, kalshi_text, pm_id, pm_text, client)
-                    
-                    if decision.get("match") and decision.get("confidence", 0.0) >= 0.80:
-                        conf = decision.get("confidence", 0.0)
-                        if conf > best_confidence:
-                            best_match = {
-                                "kalshi_event_ticker": kalshi_id,
-                                "pm_event_id": pm_id,
-                                "category": category,
-                                "confidence": conf,
-                                "method": "llm_pair",
-                                "model": os.getenv("LOCAL_LLM_MODEL", "unknown"),
-                                "ts": str(int(time.time())),
-                                "kalshi_title": kalshi_text[:100],
-                                "pm_title": pm_text[:100],
-                                "why_short": decision.get("why_short", ""),
-                                "fields_aligned": decision.get("fields_aligned", []),
-                                "fields_conflict": decision.get("fields_conflict", [])
-                            }
-                            best_confidence = conf
+                    if pm_id not in pm_events:
+                        continue
+                    pm_candidates.append(pm_id)
+
+            if not pm_candidates and allow_no_time_match:
+                pm_candidates = [pid for pid in pm_events if pid not in pm_matched]
+
+            if not pm_candidates:
+                low_conf_entry = {
+                    "kalshi_event_ticker": kalshi_id,
+                    "category": category,
+                    "top3_candidates": [],
+                    "reason": "no_time_aligned_candidates"
+                }
+                low_conf_bridges.append(low_conf_entry)
+                stats[f"low_conf_{category}"] += 1
+                continue
+
+            pm_candidates = pm_candidates[:max_candidates]
+            
+            # Steg B: Pair decision för top-3
+            best_match = None
+            best_confidence = 0.0
+            
+            for pm_id in pm_candidates:
+                if pm_id in pm_matched:
+                    continue
                 
-                if best_match:
-                    high_conf_bridges.append(best_match)
-                    pm_matched.add(best_match["pm_event_id"])
-                    stats[f"matched_{category}"] += 1
-                    
-                    # Spara incrementally (atomiskt)
-                    tmp_bridge = bridge_output + ".tmp"
-                    with open(tmp_bridge, "w") as f:
-                        json.dump(high_conf_bridges, f, indent=2)
-                    os.replace(tmp_bridge, bridge_output)
-                else:
-                    # Low confidence
-                    low_conf_entry = {
-                        "kalshi_event_ticker": kalshi_id,
-                        "category": category,
-                        "top3_candidates": [
-                            {"pm_event_id": pid, "retrieval_score": score}
-                            for pid, score in top3
-                        ],
-                        "reason": "no_match_above_threshold"
-                    }
-                    low_conf_bridges.append(low_conf_entry)
-                    stats[f"low_conf_{category}"] += 1
-                    
-                    # Spara incrementally (atomiskt)
-                    tmp_low = low_conf_output + ".tmp"
-                    with open(tmp_low, "w") as f:
-                        json.dump(low_conf_bridges, f, indent=2)
-                    os.replace(tmp_low, low_conf_output)
+                pm_text = pm_texts.get(pm_id, pm_id)
+                decision = pair_decision(kalshi_id, kalshi_text, pm_id, pm_text, client)
                 
-                # Uppdatera progress
-                if pbar:
-                    pbar.update(1)
-                else:
-                    matched_count += 1
-                    if matched_count % 10 == 0:
-                        print(f"   Processed: {matched_count}/{total_kalshi_to_match}", file=sys.stderr)
-    
-    finally:
-        if pbar:
-            pbar.close()
+                if decision.get("match") and decision.get("confidence", 0.0) >= 0.80:
+                    conf = decision.get("confidence", 0.0)
+                    if conf > best_confidence:
+                        best_match = {
+                            "kalshi_event_ticker": kalshi_id,
+                            "pm_event_id": pm_id,
+                            "category": category,
+                            "confidence": conf,
+                            "method": "llm_pair",
+                            "model": os.getenv("LOCAL_LLM_MODEL", "unknown"),
+                            "ts": str(int(time.time())),
+                            "kalshi_title": kalshi_text[:100],
+                            "pm_title": pm_text[:100],
+                            "why_short": decision.get("why_short", ""),
+                            "fields_aligned": decision.get("fields_aligned", []),
+                            "fields_conflict": decision.get("fields_conflict", [])
+                        }
+                        best_confidence = conf
+            
+            if best_match:
+                high_conf_bridges.append(best_match)
+                pm_matched.add(best_match["pm_event_id"])
+                stats[f"matched_{category}"] += 1
+                
+                # Spara incrementally (atomiskt)
+                tmp_bridge = bridge_output + ".tmp"
+                with open(tmp_bridge, "w") as f:
+                    json.dump(high_conf_bridges, f, indent=2)
+                os.replace(tmp_bridge, bridge_output)
+            else:
+                # Low confidence
+                low_conf_entry = {
+                    "kalshi_event_ticker": kalshi_id,
+                    "category": category,
+                    "top3_candidates": [
+                        {"pm_event_id": pid}
+                        for pid in pm_candidates[:3]
+                    ],
+                    "reason": "no_match_above_threshold"
+                }
+                low_conf_bridges.append(low_conf_entry)
+                stats[f"low_conf_{category}"] += 1
+                
+                # Spara incrementally (atomiskt)
+                tmp_low = low_conf_output + ".tmp"
+                with open(tmp_low, "w") as f:
+                    json.dump(low_conf_bridges, f, indent=2)
+                os.replace(tmp_low, low_conf_output)
     
     # Spara resultat (atomiskt: tmp → rename)
     tmp_bridge = bridge_output + ".tmp"
