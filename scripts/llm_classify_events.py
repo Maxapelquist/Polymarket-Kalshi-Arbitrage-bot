@@ -49,6 +49,7 @@ def normalize_category(category: str, valid_categories: List[str]) -> Optional[s
         "tech": "Science and Technology",
         "technology": "Science and Technology",
         "science": "Science and Technology",
+        "education": "Science and Technology",  # Education → Science and Technology
         "climate": "Climate and Weather",
         "weather": "Climate and Weather",
         "health": "Health",
