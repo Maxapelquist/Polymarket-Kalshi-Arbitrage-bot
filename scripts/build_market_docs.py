@@ -59,6 +59,9 @@ def build_polymarket_docs(
         subtitle = market.get("description", "")[:200]  # Begränsa längd
         category = market.get("category", "")
         
+        # Extrahera end_time (prioritera endDateIso, annars endDate)
+        end_time = market.get("endDateIso") or market.get("endDate", "")
+        
         # Hämta event title om finns
         event_title = event_titles.get(event_id, "")
         
@@ -85,6 +88,7 @@ def build_polymarket_docs(
             "title": title,
             "subtitle": subtitle,
             "category": category,
+            "end_time": end_time,
             "text": text
         })
     
@@ -126,6 +130,9 @@ def build_kalshi_docs(markets_path: str) -> List[Dict[str, Any]]:
             subtitle = market.get("subtitle", "")
             category = market.get("category", "")
             
+            # Extrahera end_time (prioritera close_time, annars settlement)
+            end_time = market.get("close_time") or market.get("settlement", "")
+            
             # Hämta event title
             event_title = event_titles.get(event_id, "")
             
@@ -148,6 +155,7 @@ def build_kalshi_docs(markets_path: str) -> List[Dict[str, Any]]:
                 "title": title,
                 "subtitle": subtitle,
                 "category": category,
+                "end_time": end_time,
                 "text": text
             })
     

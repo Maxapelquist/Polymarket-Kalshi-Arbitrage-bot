@@ -10,6 +10,7 @@ import sys
 import os
 import time
 import hashlib
+from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional, Tuple
 from collections import defaultdict, Counter
 
@@ -33,8 +34,29 @@ def load_jsonl(path: str) -> List[Dict[str, Any]]:
             docs.append(json.loads(line))
     return docs
 
-def load_event_texts(market_docs_path: str) -> Dict[str, str]:
-    """Ladda event_texts från market_docs"""
+def parse_datetime(dt_str: str) -> Optional[datetime]:
+    """Parse datetime från olika format"""
+    if not dt_str:
+        return None
+    
+    # Försök olika format
+    formats = [
+        "%Y-%m-%dT%H:%M:%SZ",  # ISO med Z
+        "%Y-%m-%dT%H:%M:%S.%fZ",  # ISO med microseconds
+        "%Y-%m-%dT%H:%M:%S",  # ISO utan Z
+        "%Y-%m-%d",  # Bara datum
+    ]
+    
+    for fmt in formats:
+        try:
+            return datetime.strptime(dt_str, fmt)
+        except ValueError:
+            continue
+    
+    return None
+
+def load_event_texts_and_times(market_docs_path: str) -> Tuple[Dict[str, str], Dict[str, Optional[datetime]]]:
+    """Ladda event_texts och end_times från market_docs"""
     from collections import defaultdict
     
     docs = load_jsonl(market_docs_path)
@@ -45,16 +67,39 @@ def load_event_texts(market_docs_path: str) -> Dict[str, str]:
             events_to_markets[event_id].append(doc)
     
     event_texts = {}
+    event_end_times = {}
+    
     for event_id, markets in events_to_markets.items():
         texts = []
+        end_times = []
+        
         for market in markets[:10]:
             text = market.get("text", "") or market.get("title", "")
             if text:
                 texts.append(text)
+            
+            # Samla end_times från markets
+            end_time_str = market.get("end_time", "")
+            if end_time_str:
+                end_times.append(end_time_str)
+        
         event_text = " | ".join(texts) if texts else event_id
         event_texts[event_id] = event_text
+        
+        # Ta senaste end_time från markets (eller första om bara en)
+        if end_times:
+            # Sortera och ta senaste
+            parsed_times = [(parse_datetime(et), et) for et in end_times]
+            parsed_times = [(dt, et) for dt, et in parsed_times if dt is not None]
+            if parsed_times:
+                parsed_times.sort(key=lambda x: x[0], reverse=True)
+                event_end_times[event_id] = parsed_times[0][0]
+            else:
+                event_end_times[event_id] = None
+        else:
+            event_end_times[event_id] = None
     
-    return event_texts
+    return event_texts, event_end_times
 
 def candidate_retrieval(
     kalshi_event_id: str,
@@ -116,6 +161,7 @@ Rules:
     
     try:
         response = client.chat(messages)
+        raw_response = response  # Spara för logging
         response = response.strip()
         if response.startswith("```json"):
             response = response[7:]
@@ -144,8 +190,15 @@ Rules:
                 candidates_with_scores.append((pm_id, score))
         
         return candidates_with_scores
+    except json.JSONDecodeError as e:
+        print(f"  ⚠️  Candidate retrieval JSON parse error: {e}", file=sys.stderr)
+        print(f"     Raw response (first 300 chars): {raw_response[:300]}", file=sys.stderr)
+        print(f"     Extracted JSON: {response[:300] if 'response' in locals() else 'N/A'}", file=sys.stderr)
+        return [(pid, 0.5) for pid, _ in pm_candidates[:3]]
     except Exception as e:
         print(f"  ⚠️  Candidate retrieval failed: {e}, using first 3", file=sys.stderr)
+        if 'raw_response' in locals():
+            print(f"     Raw response (first 300 chars): {raw_response[:300]}", file=sys.stderr)
         return [(pid, 0.5) for pid, _ in pm_candidates[:3]]
 
 def pair_decision(
@@ -184,6 +237,7 @@ Rules:
     
     try:
         response = client.chat(messages)
+        raw_response = response  # Spara för logging
         response = response.strip()
         if response.startswith("```json"):
             response = response[7:]
@@ -194,10 +248,22 @@ Rules:
         response = response.strip()
         
         # Försök hitta JSON-objekt i response (hantera extra text)
+        # Först: hitta första kompletta JSON-objekt
         json_start = response.find("{")
-        json_end = response.rfind("}") + 1
-        if json_start >= 0 and json_end > json_start:
-            response = response[json_start:json_end]
+        if json_start >= 0:
+            # Hitta matchande }
+            brace_count = 0
+            json_end = json_start
+            for i in range(json_start, len(response)):
+                if response[i] == '{':
+                    brace_count += 1
+                elif response[i] == '}':
+                    brace_count -= 1
+                    if brace_count == 0:
+                        json_end = i + 1
+                        break
+            if json_end > json_start:
+                response = response[json_start:json_end]
         
         result = json.loads(response)
         result["kalshi_event_id"] = kalshi_event_id
@@ -205,9 +271,21 @@ Rules:
         return result
     except json.JSONDecodeError as e:
         print(f"  ⚠️  Pair decision JSON parse error: {e}", file=sys.stderr)
-        print(f"     Response: {response[:200]}...", file=sys.stderr)
+        print(f"     Raw response (first 300 chars): {raw_response[:300]}", file=sys.stderr)
+        print(f"     Extracted JSON: {response[:300] if 'response' in locals() else 'N/A'}", file=sys.stderr)
+        return {
+            "match": False,
+            "confidence": 0.0,
+            "why_short": f"JSON parse error: {str(e)}",
+            "fields_aligned": [],
+            "fields_conflict": [],
+            "kalshi_event_id": kalshi_event_id,
+            "pm_event_id": pm_event_id
+        }
     except Exception as e:
         print(f"  ⚠️  Pair decision failed: {e}", file=sys.stderr)
+        if 'raw_response' in locals():
+            print(f"     Raw response (first 300 chars): {raw_response[:300]}", file=sys.stderr)
         return {
             "match": False,
             "confidence": 0.0,
@@ -230,9 +308,13 @@ def main():
     pm_categories = load_jsonl("data/matching/pm_event_categories.jsonl")
     kalshi_categories = load_jsonl("data/matching/kalshi_event_categories.jsonl")
     
-    # Ladda event texts
-    pm_texts = load_event_texts("data/polymarket/derived/polymarket_market_docs.jsonl")
-    kalshi_texts = load_event_texts("data/kalshi/derived/kalshi_market_docs.jsonl")
+    # Ladda event texts och end_times
+    pm_texts, pm_end_times = load_event_texts_and_times("data/polymarket/derived/polymarket_market_docs.jsonl")
+    kalshi_texts, kalshi_end_times = load_event_texts_and_times("data/kalshi/derived/kalshi_market_docs.jsonl")
+    
+    # Tidsfönster-filter (dagar)
+    time_window_days = int(os.getenv("MATCH_TIME_WINDOW_DAYS", "30"))
+    print(f"   Tidsfönster-filter: {time_window_days} dagar", file=sys.stderr)
     
     # Gruppera events per kategori
     pm_by_category = defaultdict(list)
@@ -322,12 +404,36 @@ def main():
             if not pbar:
                 print(f"\n   Kategori: {category} ({len(kalshi_events)} Kalshi, {len(pm_events)} Polymarket)", file=sys.stderr)
             
-            # Bygg PM candidates (exkludera redan matchade)
-            pm_candidates_list = [
-                (pid, pm_texts.get(pid, pid)) 
-                for pid in pm_events 
-                if pid not in pm_matched
-            ]
+            # Bygg PM candidates (exkludera redan matchade + tidsfönster-filter)
+            pm_candidates_list = []
+            filtered_by_time = 0
+            
+            for pid in pm_events:
+                if pid in pm_matched:
+                    continue
+                
+                # Tidsfönster-filter: jämför med alla Kalshi events i kategorin
+                # Om minst ett Kalshi event har end_time inom fönstret, inkludera PM event
+                pm_end_time = pm_end_times.get(pid)
+                if pm_end_time:
+                    # Kolla om något Kalshi event i kategorin är inom tidsfönstret
+                    within_window = False
+                    for kid in kalshi_events:
+                        kalshi_end_time = kalshi_end_times.get(kid)
+                        if kalshi_end_time:
+                            time_diff = abs((pm_end_time - kalshi_end_time).days)
+                            if time_diff <= time_window_days:
+                                within_window = True
+                                break
+                    
+                    if not within_window:
+                        filtered_by_time += 1
+                        continue
+                
+                pm_candidates_list.append((pid, pm_texts.get(pid, pid)))
+            
+            if filtered_by_time > 0:
+                print(f"   Filtrerade bort {filtered_by_time} PM events p.g.a. tidsfönster", file=sys.stderr)
             
             if not pm_candidates_list:
                 continue
