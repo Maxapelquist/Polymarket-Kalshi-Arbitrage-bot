@@ -17,6 +17,11 @@ from collections import defaultdict
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from local_llm_client import get_client
 
+try:
+    from tqdm import tqdm
+except ImportError:
+    tqdm = None
+
 def load_jsonl(path: str) -> List[Dict[str, Any]]:
     """Ladda JSONL-fil"""
     if not os.path.exists(path):
@@ -77,6 +82,92 @@ def save_to_cache(cache_key: str, result: Dict[str, Any]):
     with open(cache_path, "w") as f:
         json.dump(result, f, indent=2)
 
+def extract_json_object(response: str) -> str:
+    """Försök extrahera första JSON-objektet ur ett svar."""
+    response = response.strip()
+    if response.startswith("```json"):
+        response = response[7:]
+    if response.startswith("```"):
+        response = response[3:]
+    if response.endswith("```"):
+        response = response[:-3]
+    response = response.strip()
+
+    if response.startswith("{") and response.endswith("}"):
+        return response
+
+    start = response.find("{")
+    if start == -1:
+        raise ValueError("No JSON object found in response")
+
+    depth = 0
+    in_string = False
+    escape = False
+    for idx in range(start, len(response)):
+        char = response[idx]
+        if escape:
+            escape = False
+            continue
+        if char == "\\":
+            escape = True
+            continue
+        if char == "\"":
+            in_string = not in_string
+        if in_string:
+            continue
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return response[start:idx + 1]
+
+    raise ValueError("Unbalanced JSON object in response")
+
+def normalize_category(category: str, valid_categories: List[str]) -> Optional[str]:
+    """Normalisera kategori till exakt matchning."""
+    if not category:
+        return None
+    normalized = category.strip()
+    if normalized in valid_categories:
+        return normalized
+
+    lower_map = {cat.lower(): cat for cat in valid_categories}
+    lower = normalized.lower()
+    if lower in lower_map:
+        return lower_map[lower]
+
+    aliases = {
+        "political": "Politics",
+        "election": "Elections",
+        "economy": "Economics",
+        "businesses": "Business",
+        "tech": "Science and Technology",
+        "technology": "Science and Technology",
+        "science": "Science and Technology",
+        "climate": "Climate and Weather",
+        "weather": "Climate and Weather",
+        "law": "Law and Justice",
+        "legal": "Law and Justice",
+        "sports": "Sports",
+        "entertainment": "Entertainment",
+        "culture": "Culture",
+        "energy": "Energy",
+        "finance": "Finance",
+        "crypto": "Crypto",
+        "health": "Health",
+        "education": "Science and Technology",
+    }
+    alias = aliases.get(lower)
+    if alias and alias in valid_categories:
+        return alias
+
+    for cat in valid_categories:
+        if lower in cat.lower():
+            return cat
+
+    return None
+
 def classify_event(event_id: str, event_text: str, categories: List[str], client) -> Dict[str, Any]:
     """Klassificera ett event med LLM"""
     cache_key = get_cache_key(event_text, categories)
@@ -111,21 +202,13 @@ Rules:
     try:
         response = client.chat(messages)
         
-        # Parse JSON från response (ta bort markdown om finns)
-        response = response.strip()
-        if response.startswith("```json"):
-            response = response[7:]
-        if response.startswith("```"):
-            response = response[3:]
-        if response.endswith("```"):
-            response = response[:-3]
-        response = response.strip()
-        
+        response = extract_json_object(response)
         result = json.loads(response)
-        
-        # Validera
-        if result.get("category") not in categories:
-            raise ValueError(f"Invalid category: {result.get('category')}")
+
+        normalized = normalize_category(result.get("category", ""), categories)
+        if not normalized:
+            raise ValueError(f"Could not normalize category: {result.get('category')}")
+        result["category"] = normalized
         
         # Lägg till metadata
         result["event_id"] = event_id
@@ -195,14 +278,15 @@ def main():
     print(f"   Redan klassificerade: {len(existing_pm)}", file=sys.stderr)
     
     pm_classified = list(existing_pm.values())
+    remaining_pm = [(event_id, event_text) for event_id, event_text in pm_event_texts.items() if event_id not in existing_pm]
     processed = 0
-    for event_id, event_text in pm_event_texts.items():
+    iterator = remaining_pm
+    if tqdm:
+        iterator = tqdm(remaining_pm, desc="PM klassificering", unit="event", dynamic_ncols=True)
+    for event_id, event_text in iterator:
         # Hoppa över om redan klassificerad
-        if event_id in existing_pm:
-            continue
-        
         processed += 1
-        if processed % 10 == 0:
+        if not tqdm and processed % 10 == 0:
             print(f"   Processed {processed} nya events...", file=sys.stderr)
         
         result = classify_event(event_id, event_text, categories, client)
@@ -239,14 +323,19 @@ def main():
     print(f"   Redan klassificerade: {len(existing_kalshi)}", file=sys.stderr)
     
     kalshi_classified = list(existing_kalshi.values())
+    remaining_kalshi = [
+        (event_id, event_text)
+        for event_id, event_text in kalshi_event_texts.items()
+        if event_id not in existing_kalshi
+    ]
     processed = 0
-    for event_id, event_text in kalshi_event_texts.items():
+    iterator = remaining_kalshi
+    if tqdm:
+        iterator = tqdm(remaining_kalshi, desc="Kalshi klassificering", unit="event", dynamic_ncols=True)
+    for event_id, event_text in iterator:
         # Hoppa över om redan klassificerad
-        if event_id in existing_kalshi:
-            continue
-        
         processed += 1
-        if processed % 10 == 0:
+        if not tqdm and processed % 10 == 0:
             print(f"   Processed {processed} nya events...", file=sys.stderr)
         
         result = classify_event(event_id, event_text, categories, client)
