@@ -316,6 +316,17 @@ def main():
     time_window_days = int(os.getenv("MATCH_TIME_WINDOW_DAYS", "30"))
     print(f"   Tidsfönster-filter: {time_window_days} dagar", file=sys.stderr)
     
+    # Filtrera till en kategori om angiven (för testning)
+    test_category = os.getenv("TEST_CATEGORY", "")
+    if test_category:
+        if test_category not in categories:
+            print(f"⚠️  Varning: '{test_category}' finns inte i kategorier. Tillgängliga: {', '.join(categories)}", file=sys.stderr)
+            print(f"   Körer alla kategorier istället.", file=sys.stderr)
+            test_category = ""
+        else:
+            print(f"🧪 TEST-LÄGE: Körer endast kategori '{test_category}'", file=sys.stderr)
+            categories = [test_category]
+    
     # Gruppera events per kategori
     pm_by_category = defaultdict(list)
     for cat in pm_categories:
