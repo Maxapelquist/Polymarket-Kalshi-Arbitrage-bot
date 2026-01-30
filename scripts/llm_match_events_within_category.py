@@ -13,6 +13,11 @@ import hashlib
 from typing import Dict, List, Any, Optional, Tuple
 from collections import defaultdict, Counter
 
+try:
+    from tqdm import tqdm
+except ImportError:
+    tqdm = None
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from local_llm_client import get_client
 
@@ -120,6 +125,12 @@ Rules:
             response = response[:-3]
         response = response.strip()
         
+        # Försök hitta JSON-objekt i response (hantera extra text)
+        json_start = response.find("{")
+        json_end = response.rfind("}") + 1
+        if json_start >= 0 and json_end > json_start:
+            response = response[json_start:json_end]
+        
         result = json.loads(response)
         top3 = result.get("top3", [])
         
@@ -182,10 +193,19 @@ Rules:
             response = response[:-3]
         response = response.strip()
         
+        # Försök hitta JSON-objekt i response (hantera extra text)
+        json_start = response.find("{")
+        json_end = response.rfind("}") + 1
+        if json_start >= 0 and json_end > json_start:
+            response = response[json_start:json_end]
+        
         result = json.loads(response)
         result["kalshi_event_id"] = kalshi_event_id
         result["pm_event_id"] = pm_event_id
         return result
+    except json.JSONDecodeError as e:
+        print(f"  ⚠️  Pair decision JSON parse error: {e}", file=sys.stderr)
+        print(f"     Response: {response[:200]}...", file=sys.stderr)
     except Exception as e:
         print(f"  ⚠️  Pair decision failed: {e}", file=sys.stderr)
         return {
@@ -269,97 +289,133 @@ def main():
     
     stats = defaultdict(int)
     
-    print(f"\n🔄 Matchar events per kategori...", file=sys.stderr)
-    
+    # Räkna totalt antal Kalshi events att matcha
+    total_kalshi_to_match = 0
     for category in categories:
         kalshi_events = kalshi_by_category.get(category, [])
         pm_events = pm_by_category.get(category, [])
-        
-        if not kalshi_events or not pm_events:
-            continue
-        
-        print(f"\n   Kategori: {category} ({len(kalshi_events)} Kalshi, {len(pm_events)} Polymarket)", file=sys.stderr)
-        
-        # Bygg PM candidates (exkludera redan matchade)
-        pm_candidates_list = [
-            (pid, pm_texts.get(pid, pid)) 
-            for pid in pm_events 
-            if pid not in pm_matched
-        ]
-        
-        if not pm_candidates_list:
-            continue
-        
-        for kalshi_id in kalshi_events:
-            # Checkpoint: hoppa över om redan matchad
-            already_matched = any(b.get("kalshi_event_ticker") == kalshi_id for b in high_conf_bridges)
-            if already_matched:
+        if kalshi_events and pm_events:
+            # Filtrera bort redan matchade
+            for kalshi_id in kalshi_events:
+                already_matched = any(b.get("kalshi_event_ticker") == kalshi_id for b in high_conf_bridges)
+                if not already_matched:
+                    total_kalshi_to_match += 1
+    
+    print(f"\n🔄 Matchar events per kategori...", file=sys.stderr)
+    print(f"   Totalt att matcha: {total_kalshi_to_match} Kalshi events", file=sys.stderr)
+    
+    # Progress bar
+    matched_count = 0
+    if tqdm:
+        pbar = tqdm(total=total_kalshi_to_match, desc="Matching", unit="event", file=sys.stderr)
+    else:
+        pbar = None
+    
+    try:
+        for category in categories:
+            kalshi_events = kalshi_by_category.get(category, [])
+            pm_events = pm_by_category.get(category, [])
+            
+            if not kalshi_events or not pm_events:
                 continue
             
-            kalshi_text = kalshi_texts.get(kalshi_id, kalshi_id)
+            if not pbar:
+                print(f"\n   Kategori: {category} ({len(kalshi_events)} Kalshi, {len(pm_events)} Polymarket)", file=sys.stderr)
             
-            # Steg A: Candidate retrieval
-            top3 = candidate_retrieval(kalshi_id, kalshi_text, pm_candidates_list, client)
+            # Bygg PM candidates (exkludera redan matchade)
+            pm_candidates_list = [
+                (pid, pm_texts.get(pid, pid)) 
+                for pid in pm_events 
+                if pid not in pm_matched
+            ]
             
-            # Steg B: Pair decision för top-3
-            best_match = None
-            best_confidence = 0.0
+            if not pm_candidates_list:
+                continue
             
-            for pm_id, _ in top3:
-                if pm_id in pm_matched:
+            for kalshi_id in kalshi_events:
+                # Checkpoint: hoppa över om redan matchad
+                already_matched = any(b.get("kalshi_event_ticker") == kalshi_id for b in high_conf_bridges)
+                if already_matched:
+                    if pbar:
+                        pbar.update(1)
                     continue
                 
-                pm_text = pm_texts.get(pm_id, pm_id)
-                decision = pair_decision(kalshi_id, kalshi_text, pm_id, pm_text, client)
+                kalshi_text = kalshi_texts.get(kalshi_id, kalshi_id)
                 
-                if decision.get("match") and decision.get("confidence", 0.0) >= 0.80:
-                    conf = decision.get("confidence", 0.0)
-                    if conf > best_confidence:
-                        best_match = {
-                            "kalshi_event_ticker": kalshi_id,
-                            "pm_event_id": pm_id,
-                            "category": category,
-                            "confidence": conf,
-                            "method": "llm_pair",
-                            "model": os.getenv("LOCAL_LLM_MODEL", "unknown"),
-                            "ts": str(int(time.time())),
-                            "kalshi_title": kalshi_text[:100],
-                            "pm_title": pm_text[:100],
-                            "why_short": decision.get("why_short", ""),
-                            "fields_aligned": decision.get("fields_aligned", []),
-                            "fields_conflict": decision.get("fields_conflict", [])
-                        }
-                        best_confidence = conf
-            
-            if best_match:
-                high_conf_bridges.append(best_match)
-                pm_matched.add(best_match["pm_event_id"])
-                stats[f"matched_{category}"] += 1
+                # Steg A: Candidate retrieval
+                top3 = candidate_retrieval(kalshi_id, kalshi_text, pm_candidates_list, client)
                 
-                # Spara incrementally (atomiskt)
-                tmp_bridge = bridge_output + ".tmp"
-                with open(tmp_bridge, "w") as f:
-                    json.dump(high_conf_bridges, f, indent=2)
-                os.replace(tmp_bridge, bridge_output)
-            else:
-                # Low confidence
-                low_conf_entry = {
-                    "kalshi_event_ticker": kalshi_id,
-                    "category": category,
-                    "top3_candidates": [
-                        {"pm_event_id": pid, "retrieval_score": score}
-                        for pid, score in top3
-                    ],
-                    "reason": "no_match_above_threshold"
-                }
-                low_conf_bridges.append(low_conf_entry)
-                stats[f"low_conf_{category}"] += 1
+                # Steg B: Pair decision för top-3
+                best_match = None
+                best_confidence = 0.0
                 
-                # Spara incrementally (atomiskt)
-                tmp_low = low_conf_output + ".tmp"
-                with open(tmp_low, "w") as f:
-                    json.dump(low_conf_bridges, f, indent=2)
-                os.replace(tmp_low, low_conf_output)
+                for pm_id, _ in top3:
+                    if pm_id in pm_matched:
+                        continue
+                    
+                    pm_text = pm_texts.get(pm_id, pm_id)
+                    decision = pair_decision(kalshi_id, kalshi_text, pm_id, pm_text, client)
+                    
+                    if decision.get("match") and decision.get("confidence", 0.0) >= 0.80:
+                        conf = decision.get("confidence", 0.0)
+                        if conf > best_confidence:
+                            best_match = {
+                                "kalshi_event_ticker": kalshi_id,
+                                "pm_event_id": pm_id,
+                                "category": category,
+                                "confidence": conf,
+                                "method": "llm_pair",
+                                "model": os.getenv("LOCAL_LLM_MODEL", "unknown"),
+                                "ts": str(int(time.time())),
+                                "kalshi_title": kalshi_text[:100],
+                                "pm_title": pm_text[:100],
+                                "why_short": decision.get("why_short", ""),
+                                "fields_aligned": decision.get("fields_aligned", []),
+                                "fields_conflict": decision.get("fields_conflict", [])
+                            }
+                            best_confidence = conf
+                
+                if best_match:
+                    high_conf_bridges.append(best_match)
+                    pm_matched.add(best_match["pm_event_id"])
+                    stats[f"matched_{category}"] += 1
+                    
+                    # Spara incrementally (atomiskt)
+                    tmp_bridge = bridge_output + ".tmp"
+                    with open(tmp_bridge, "w") as f:
+                        json.dump(high_conf_bridges, f, indent=2)
+                    os.replace(tmp_bridge, bridge_output)
+                else:
+                    # Low confidence
+                    low_conf_entry = {
+                        "kalshi_event_ticker": kalshi_id,
+                        "category": category,
+                        "top3_candidates": [
+                            {"pm_event_id": pid, "retrieval_score": score}
+                            for pid, score in top3
+                        ],
+                        "reason": "no_match_above_threshold"
+                    }
+                    low_conf_bridges.append(low_conf_entry)
+                    stats[f"low_conf_{category}"] += 1
+                    
+                    # Spara incrementally (atomiskt)
+                    tmp_low = low_conf_output + ".tmp"
+                    with open(tmp_low, "w") as f:
+                        json.dump(low_conf_bridges, f, indent=2)
+                    os.replace(tmp_low, low_conf_output)
+                
+                # Uppdatera progress
+                if pbar:
+                    pbar.update(1)
+                else:
+                    matched_count += 1
+                    if matched_count % 10 == 0:
+                        print(f"   Processed: {matched_count}/{total_kalshi_to_match}", file=sys.stderr)
+    
+    finally:
+        if pbar:
+            pbar.close()
     
     # Spara resultat (atomiskt: tmp → rename)
     tmp_bridge = bridge_output + ".tmp"
